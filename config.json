@@ -1,5 +1,5 @@
 {
-  "broker_address": "192.168.0.40",
+  "broker_address": "broker.hivemq.com",
   "broker_port": 1883,
   "topic_image_display": "server/image/display",
   "screen_width": 1600,
