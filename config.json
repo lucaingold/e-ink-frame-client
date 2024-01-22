@@ -1,5 +1,5 @@
 {
-  "broker_address": "broker.hivemq.com",
+  "broker_address": "raspberrypi.local",
   "broker_port": 1883,
   "topic_image_display": "server/image/display",
   "screen_width": 1600,
