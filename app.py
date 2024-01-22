@@ -4,12 +4,9 @@ import time
 
 import paho.mqtt.client as mqtt
 import json
-from io import BytesIO
 from PIL import Image
-from e_ink_screen_mock import EInkScreen
-
-
-# from e_ink_screen import EInkScreen
+# from e_ink_screen_mock import EInkScreen
+from e_ink_screen import EInkScreen
 
 # Callback when the client connects to the broker
 def on_connect(client, userdata, flags, rc):
