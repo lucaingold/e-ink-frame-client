@@ -47,7 +47,6 @@ def main():
     config = load_config()
 
     e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"])
-    e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"])
     e_ink_screen.run()
 
     client = mqtt.Client()
