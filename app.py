@@ -1,12 +1,16 @@
-import base64
 import io
+import threading
 import time
-
 import paho.mqtt.client as mqtt
 import json
 from PIL import Image
 # from e_ink_screen_mock import EInkScreen
 from e_ink_screen import EInkScreen
+from processed_message_tracker import ProcessedMessageTracker
+
+
+e_ink_screen_lock = threading.Lock()
+processed_message_tracker = ProcessedMessageTracker()
 
 # Callback when the client connects to the broker
 def on_connect(client, userdata, flags, rc):
@@ -15,15 +19,18 @@ def on_connect(client, userdata, flags, rc):
     client.subscribe(config["topic_image_display"])
 
 
-# Callback when a message is received from the broker
+# Callback when a message is re ceived from the broker
 def on_message(client, userdata, msg):
     print("Received message on topic {}".format(msg.topic))
     print("Received message payload length:", len(msg.payload))
     if msg.topic == config["topic_image_display"]:
         try:
-            image_data = msg.payload
-            img = Image.open(io.BytesIO(image_data))
-            e_ink_screen.display_image_on_epd(img)
+            if processed_message_tracker.should_process_message(msg.mid, msg.timestamp):
+                image_data = msg.payload
+                img = Image.open(io.BytesIO(image_data))
+                with e_ink_screen_lock:
+                    e_ink_screen.display_image_on_epd(img)
+                    time.sleep(5)
         except Exception as e:
             print("Error decoding and displaying the image:", str(e))
 
@@ -53,8 +60,7 @@ def main():
     client.username_pw_set(config["username"], config["password"])
     client.tls_set()
 
-
-# Set the callbacks
+    # Set the callbacks
     client.on_connect = on_connect
     client.on_message = on_message
     client.on_disconnect = on_disconnect
