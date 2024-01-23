@@ -1,7 +1,9 @@
 {
-  "broker_address": "raspberrypi.local",
-  "broker_port": 1883,
+  "broker_address": "",
+  "broker_port": 8883,
   "topic_image_display": "server/image/display",
   "screen_width": 1600,
-  "screen_height": 1200
+  "screen_height": 1200,
+  "username": "",
+  "password": ""
 }

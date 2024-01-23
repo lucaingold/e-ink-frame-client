@@ -51,8 +51,11 @@ def main():
     e_ink_screen.run()
 
     client = mqtt.Client()
+    client.username_pw_set(config["username"], config["password"])
+    client.tls_set()
 
-    # Set the callbacks
+
+# Set the callbacks
     client.on_connect = on_connect
     client.on_message = on_message
     client.on_disconnect = on_disconnect
