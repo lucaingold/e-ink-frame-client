@@ -1,12 +1,14 @@
 import io
 import threading
 import time
+import uuid
+
 import paho.mqtt.client as mqtt
 import json
 from PIL import Image
-# from e_ink_screen_mock import EInkScreen
 import socket
-from e_ink_screen import EInkScreen
+from e_ink_screen_mock import EInkScreen
+# from e_ink_screen import EInkScreen
 from processed_message_tracker import ProcessedMessageTracker
 
 e_ink_screen_lock = threading.Lock()
@@ -15,13 +17,26 @@ processed_message_tracker = ProcessedMessageTracker()
 
 def get_status_payload(status):
     hostname = socket.gethostname()
-    ip_address = socket.gethostbyname(hostname)
+    ip_address = get_ip()
     return json.dumps({
         "hostname": hostname,
         "ip_address": ip_address,
         "mac": config["device_id"],
         'status': status
     })
+
+
+def get_ip():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.settimeout(0)
+    try:
+        s.connect(('10.254.254.254', 1))
+        ip = s.getsockname()[0]
+    except Exception:
+        ip = '127.0.0.1'
+    finally:
+        s.close()
+    return ip
 
 
 def get_status_topic():
@@ -56,7 +71,6 @@ def on_message(client, userdata, msg):
                 img = Image.open(io.BytesIO(image_data))
                 with e_ink_screen_lock:
                     e_ink_screen.display_image_on_epd(img)
-                    print()
                     time.sleep(5)
         except Exception as e:
             print("Error decoding and displaying the image:", str(e))
@@ -86,7 +100,8 @@ def main():
     e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"])
     e_ink_screen.run()
 
-    client = mqtt.Client()
+    client = mqtt.Client(client_id=str(uuid.uuid4()))
+
     if (config["password"]):
         client.username_pw_set(config["username"], config["password"])
         client.tls_set()
@@ -97,7 +112,8 @@ def main():
     client.on_disconnect = on_disconnect
 
     # Configure Last Will and Testament
-    client.will_set(config["topic_device_status"], payload=get_status_payload('offline'), qos=1, retain=True)
+    lw_status = get_status_payload('offline')
+    client.will_set(config["topic_device_status"], payload=lw_status, qos=1, retain=True)
 
     # Connect to the broker
     client.connect(config["broker_address"], config["broker_port"], 60)
