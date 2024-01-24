@@ -7,8 +7,8 @@ import paho.mqtt.client as mqtt
 import json
 from PIL import Image
 import socket
-from e_ink_screen_mock import EInkScreen
-# from e_ink_screen import EInkScreen
+# from e_ink_screen_mock import EInkScreen
+from e_ink_screen import EInkScreen
 from processed_message_tracker import ProcessedMessageTracker
 
 e_ink_screen_lock = threading.Lock()
@@ -113,10 +113,11 @@ def main():
 
     # Configure Last Will and Testament
     lw_status = get_status_payload('offline')
+    print(config["topic_device_status"])
     client.will_set(config["topic_device_status"], payload=lw_status, qos=1, retain=True)
 
     # Connect to the broker
-    client.connect(config["broker_address"], config["broker_port"], 60)
+    client.connect(host=config["broker_address"], port=config["broker_port"], keepalive=30)
 
     # Loop to maintain the connection and process incoming messages
     client.loop_forever()
