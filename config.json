@@ -3,7 +3,7 @@
   "broker_port": 8883,
   "username": "einkframe",
   "password": "",
-  "device_id": "",
+  "device_id": "00:00:00:00:00:00",
   "device_id_placeholder": "{device_id}",
   "topic_image_display": "device/{device_id}/image/display",
   "topic_device_status": "device/{device_id}/status/online",
