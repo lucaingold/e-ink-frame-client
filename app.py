@@ -4,13 +4,26 @@ import time
 import paho.mqtt.client as mqtt
 import json
 from PIL import Image
-# from e_ink_screen_mock import EInkScreen
-from e_ink_screen import EInkScreen
+from e_ink_screen_mock import EInkScreen
+# from e_ink_screen import EInkScreen
 from processed_message_tracker import ProcessedMessageTracker
-
 
 e_ink_screen_lock = threading.Lock()
 processed_message_tracker = ProcessedMessageTracker()
+
+
+def get_status_topic():
+    device_id = config["device_id"]
+    device_id_placeholder = config["device_id_placeholder"]
+    status_topic = config["topic_device_status"].replace(device_id_placeholder, device_id)
+    return status_topic
+
+
+def get_display_topic():
+    device_id = config["device_id"]
+    device_id_placeholder = config["device_id_placeholder"]
+    return config["topic_image_display"].replace(device_id_placeholder, device_id)
+
 
 # Callback when the client connects to the broker
 def on_connect(client, userdata, flags, rc):
@@ -37,7 +50,8 @@ def on_message(client, userdata, msg):
 
 # Callback when the client is disconnected from the broker
 def on_disconnect(client, userdata, rc):
-    print("Disconnected from the broker. Trying to reconnect...")
+    print("Disconnected from the broker. Will publish offline status. Trying to reconnect...")
+    client.publish(config["topic_device_status"], payload="offline", qos=1, retain=True)
     # Add a delay before attempting to reconnect
     time.sleep(5)
     client.reconnect()
@@ -52,18 +66,24 @@ def main():
     global config
     global e_ink_screen
     config = load_config()
+    config["topic_device_status"] = get_status_topic()
+    config["topic_image_display"] = get_display_topic()
 
     e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"])
     e_ink_screen.run()
 
     client = mqtt.Client()
-    client.username_pw_set(config["username"], config["password"])
-    client.tls_set()
+    if (config["password"]):
+        client.username_pw_set(config["username"], config["password"])
+        client.tls_set()
 
     # Set the callbacks
     client.on_connect = on_connect
     client.on_message = on_message
     client.on_disconnect = on_disconnect
+
+    # Configure Last Will and Testament
+    client.will_set(config["topic_device_status"], payload="offline", qos=1, retain=True)
 
     # Connect to the broker
     client.connect(config["broker_address"], config["broker_port"], 60)
