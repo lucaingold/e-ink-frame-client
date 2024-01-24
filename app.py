@@ -4,9 +4,9 @@ import time
 import paho.mqtt.client as mqtt
 import json
 from PIL import Image
-from e_ink_screen_mock import EInkScreen
+# from e_ink_screen_mock import EInkScreen
 import socket
-# from e_ink_screen import EInkScreen
+from e_ink_screen import EInkScreen
 from processed_message_tracker import ProcessedMessageTracker
 
 e_ink_screen_lock = threading.Lock()
