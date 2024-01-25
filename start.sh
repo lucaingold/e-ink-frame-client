@@ -1,5 +1,5 @@
 #!/bin/bash
-cd ~/code/frameBackend
-source .venv/bin/activate
+cd ~/e-ink-frame-client
+#source .venv/bin/activate
 python3 app.py
-deactivate
+#deactivate
