@@ -51,6 +51,7 @@ def get_ip():
 
 def get_charge_status():
     try:
+        pijuice = PiJuice(1, 0x14)
         power_status = pijuice.status.GetStatus()[STATUS_ROOT][STATUS_POWER]
         charge_level = pijuice.status.GetChargeLevel()['data']
         return charge_level
@@ -120,8 +121,6 @@ def main():
 
     e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"])
     e_ink_screen.run()
-
-    pijuice = PiJuice(1, 0x14)
 
     client = mqtt.Client(client_id=str(uuid.uuid4()))
 
