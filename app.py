@@ -19,11 +19,9 @@ STATUS_ROOT = "data"
 STATUS_POWER = "powerInput"
 
 
-def get_status_payload(status, battery_percentage=0):
-    battery = 0
-    wired = True
-    if battery_percentage:
-        wired = False
+def get_status_payload(status):
+    power_status, level = get_charge_status()
+    wired = power_status == 'PRESENT'
     hostname = socket.gethostname()
     ip_address = get_ip()
     return json.dumps({
@@ -32,7 +30,7 @@ def get_status_payload(status, battery_percentage=0):
         "mac": config["device_id"],
         'status': status,
         'wired': wired,
-        'battery': battery,
+        'battery': level,
     })
 
 
@@ -55,8 +53,8 @@ def get_charge_status():
         power_status = pijuice.status.GetStatus()[STATUS_ROOT][STATUS_POWER]
         charge_level = pijuice.status.GetChargeLevel()['data']
         print(power_status)
-        print(charge_level)
-        return charge_level
+        print(f'Status: {power_status}, Level: {charge_level}')
+        return power_status, charge_level
         # instance.charge_level = PiJuiceHandler.get_charge_status(power_status, charge_level)
     except Exception as e:
         print(e)
@@ -81,8 +79,7 @@ def on_connect(client, userdata, flags, rc):
     # Subscribe to a topic upon successful connection
     client.subscribe(config["topic_image_display"])
     print(f'Subscribed to {config["topic_image_display"]}')
-    battery_percentage = get_charge_status()
-    client.publish(config["topic_device_status"], payload=get_status_payload('online', battery_percentage), qos=1, retain=True)
+    client.publish(config["topic_device_status"], payload=get_status_payload('online'), qos=1, retain=True)
 
 
 # Callback when a message is received from the broker
