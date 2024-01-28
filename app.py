@@ -19,9 +19,10 @@ STATUS_ROOT = "data"
 STATUS_POWER = "powerInput"
 
 
-def get_status_payload(status):
-    power_status, level = get_charge_status()
+def get_status_payload(status, power_status='PRESENT', battery_percentage=0):
     wired = power_status == 'PRESENT'
+    if battery_percentage:
+        wired = False
     hostname = socket.gethostname()
     ip_address = get_ip()
     return json.dumps({
@@ -30,7 +31,7 @@ def get_status_payload(status):
         "mac": config["device_id"],
         'status': status,
         'wired': wired,
-        'battery': level,
+        'battery': battery_percentage,
     })
 
 
@@ -79,7 +80,7 @@ def on_connect(client, userdata, flags, rc):
     # Subscribe to a topic upon successful connection
     client.subscribe(config["topic_image_display"])
     print(f'Subscribed to {config["topic_image_display"]}')
-    client.publish(config["topic_device_status"], payload=get_status_payload('online'), qos=1, retain=True)
+    client.publish(config["topic_device_status"], payload=get_status_payload('online', get_charge_status()), qos=1, retain=True)
 
 
 # Callback when a message is received from the broker
