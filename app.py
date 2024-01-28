@@ -54,6 +54,8 @@ def get_charge_status():
         pijuice = PiJuice(1, 0x14)
         power_status = pijuice.status.GetStatus()[STATUS_ROOT][STATUS_POWER]
         charge_level = pijuice.status.GetChargeLevel()['data']
+        print(power_status)
+        print(charge_level)
         return charge_level
         # instance.charge_level = PiJuiceHandler.get_charge_status(power_status, charge_level)
     except Exception as e:
