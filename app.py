@@ -27,9 +27,7 @@ def turn_on_led(pin):
 
 def turn_off_led(pin):
     GPIO.output(pin, GPIO.LOW)
-
-
-print("LED turned off")
+    print("LED turned off")
 
 
 def get_status_payload(status, power_status='PRESENT', battery_percentage=0):
