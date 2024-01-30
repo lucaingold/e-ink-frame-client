@@ -11,7 +11,7 @@ import socket
 from e_ink_screen import EInkScreen
 from processed_message_tracker import ProcessedMessageTracker
 from pijuice import PiJuice
-# import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO
 
 e_ink_screen_lock = threading.Lock()
 processed_message_tracker = ProcessedMessageTracker()
@@ -21,13 +21,24 @@ STATUS_POWER = "powerInput"
 
 
 def turn_on_led(pin):
-    # GPIO.output(pin, GPIO.HIGH)
+    GPIO.output(pin, GPIO.HIGH)
     print("LED turned on")
 
 
 def turn_off_led(pin):
-    # GPIO.output(pin, GPIO.LOW)
+    GPIO.output(pin, GPIO.LOW)
     print("LED turned off")
+
+
+def blink_led(pin):
+    turn_on_led(pin)
+    time.sleep(0.5)
+    turn_off_led(pin)
+    time.sleep(0.5)
+    turn_on_led(pin)
+    time.sleep(0.5)
+    turn_off_led(pin)
+    print("LED blinked")
 
 
 def get_status_payload(status, power_status='PRESENT', battery_percentage=0):
@@ -105,6 +116,7 @@ def on_message(client, userdata, msg):
                 img = Image.open(io.BytesIO(image_data))
                 with e_ink_screen_lock:
                     e_ink_screen.display_image_on_epd(img)
+                    blink_led(config["led_pin"])
                     time.sleep(5)
         except Exception as e:
             print("Error decoding and displaying the image:", str(e))
@@ -137,7 +149,7 @@ def main():
         e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"])
         e_ink_screen.run()
 
-        # GPIO.setup(led_pin, GPIO.OUT)
+        GPIO.setup(led_pin, GPIO.OUT)
 
         client = mqtt.Client(client_id=str(uuid.uuid4()))
 
@@ -158,12 +170,13 @@ def main():
         # Connect to the broker
         client.connect(host=config["broker_address"], port=config["broker_port"], keepalive=30)
 
-        turn_on_led(led_pin)
+        blink_led(led_pin)
 
         # Loop to maintain the connection and process incoming messages
         client.loop_forever()
     except KeyboardInterrupt:
         turn_off_led(led_pin)
+
 
 if __name__ == "__main__":
     main()
