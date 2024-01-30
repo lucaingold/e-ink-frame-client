@@ -11,12 +11,25 @@ import socket
 from e_ink_screen import EInkScreen
 from processed_message_tracker import ProcessedMessageTracker
 from pijuice import PiJuice
+import RPi.GPIO as GPIO
 
 e_ink_screen_lock = threading.Lock()
 processed_message_tracker = ProcessedMessageTracker()
 
 STATUS_ROOT = "data"
 STATUS_POWER = "powerInput"
+
+
+def turn_on_led(pin):
+    GPIO.output(pin, GPIO.HIGH)
+    print("LED turned on")
+
+
+def turn_off_led(pin):
+    GPIO.output(pin, GPIO.LOW)
+
+
+print("LED turned off")
 
 
 def get_status_payload(status, power_status='PRESENT', battery_percentage=0):
@@ -80,7 +93,8 @@ def on_connect(client, userdata, flags, rc):
     # Subscribe to a topic upon successful connection
     client.subscribe(config["topic_image_display"])
     print(f'Subscribed to {config["topic_image_display"]}')
-    client.publish(config["topic_device_status"], payload=get_status_payload('online', get_charge_status()), qos=1, retain=True)
+    client.publish(config["topic_device_status"], payload=get_status_payload('online', get_charge_status()), qos=1,
+                   retain=True)
 
 
 # Callback when a message is received from the broker
@@ -119,30 +133,41 @@ def main():
     config["topic_device_status"] = get_status_topic()
     config["topic_image_display"] = get_display_topic()
 
-    e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"])
-    e_ink_screen.run()
+    led_pin = config["led_pin"]
+    try:
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(led_pin, GPIO.OUT)
 
-    client = mqtt.Client(client_id=str(uuid.uuid4()))
+        e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"])
+        e_ink_screen.run()
 
-    if (config["password"]):
-        client.username_pw_set(config["username"], config["password"])
-        client.tls_set()
+        client = mqtt.Client(client_id=str(uuid.uuid4()))
 
-    # Set the callbacks
-    client.on_connect = on_connect
-    client.on_message = on_message
-    client.on_disconnect = on_disconnect
+        if (config["password"]):
+            client.username_pw_set(config["username"], config["password"])
+            client.tls_set()
 
-    # Configure Last Will and Testament
-    lw_status = get_status_payload('offline')
-    print(config["topic_device_status"])
-    client.will_set(config["topic_device_status"], payload=lw_status, qos=1, retain=True)
+        # Set the callbacks
+        client.on_connect = on_connect
+        client.on_message = on_message
+        client.on_disconnect = on_disconnect
 
-    # Connect to the broker
-    client.connect(host=config["broker_address"], port=config["broker_port"], keepalive=30)
+        # Configure Last Will and Testament
+        lw_status = get_status_payload('offline')
+        print(config["topic_device_status"])
+        client.will_set(config["topic_device_status"], payload=lw_status, qos=1, retain=True)
 
-    # Loop to maintain the connection and process incoming messages
-    client.loop_forever()
+        # Connect to the broker
+        client.connect(host=config["broker_address"], port=config["broker_port"], keepalive=30)
+
+        turn_on_led(led_pin)
+
+        # Loop to maintain the connection and process incoming messages
+        client.loop_forever()
+    except KeyboardInterrupt:
+        turn_off_led(led_pin)
+    finally:
+        GPIO.cleanup()
 
 
 if __name__ == "__main__":

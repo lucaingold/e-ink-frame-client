@@ -85,7 +85,6 @@ sudo chmod +x start.sh
 
 #### PiJuice
 sudo apt-get install pijuice-base
-pijuice_cli
-
+Y
 ### Lowering Raspberry Pi Zero WH power consumption
 https://www.cnx-software.com/2021/12/09/raspberry-pi-zero-2-w-power-consumption/
