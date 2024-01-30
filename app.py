@@ -135,11 +135,11 @@ def main():
 
     led_pin = config["led_pin"]
     try:
-        GPIO.setmode(GPIO.BCM)
-        GPIO.setup(led_pin, GPIO.OUT)
 
         e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"])
         e_ink_screen.run()
+
+        GPIO.setup(led_pin, GPIO.OUT)
 
         client = mqtt.Client(client_id=str(uuid.uuid4()))
 
