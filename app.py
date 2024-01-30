@@ -166,9 +166,6 @@ def main():
         client.loop_forever()
     except KeyboardInterrupt:
         turn_off_led(led_pin)
-    finally:
-        GPIO.cleanup()
-
 
 if __name__ == "__main__":
     main()
