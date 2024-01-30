@@ -11,7 +11,7 @@ import socket
 from e_ink_screen import EInkScreen
 from processed_message_tracker import ProcessedMessageTracker
 from pijuice import PiJuice
-import RPi.GPIO as GPIO
+# import RPi.GPIO as GPIO
 
 e_ink_screen_lock = threading.Lock()
 processed_message_tracker = ProcessedMessageTracker()
@@ -21,12 +21,12 @@ STATUS_POWER = "powerInput"
 
 
 def turn_on_led(pin):
-    GPIO.output(pin, GPIO.HIGH)
+    # GPIO.output(pin, GPIO.HIGH)
     print("LED turned on")
 
 
 def turn_off_led(pin):
-    GPIO.output(pin, GPIO.LOW)
+    # GPIO.output(pin, GPIO.LOW)
     print("LED turned off")
 
 
@@ -137,7 +137,7 @@ def main():
         e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"])
         e_ink_screen.run()
 
-        GPIO.setup(led_pin, GPIO.OUT)
+        # GPIO.setup(led_pin, GPIO.OUT)
 
         client = mqtt.Client(client_id=str(uuid.uuid4()))
 
