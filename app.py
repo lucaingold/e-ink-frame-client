@@ -14,8 +14,8 @@ from processed_message_tracker import ProcessedMessageTracker
 from pijuice import PiJuice
 import RPi.GPIO as GPIO
 
-logging.basicConfig(level=logging.DEBUG, filename='app.log', filemode='w',
-                    format='%(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(name)s - %(levelname)s - %(message)s')
+fh = logging.FileHandler('/var/log/supervisor/einkscreen.log')
 e_ink_screen_lock = threading.Lock()
 processed_message_tracker = ProcessedMessageTracker()
 
