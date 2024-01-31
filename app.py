@@ -12,9 +12,10 @@ import socket
 from e_ink_screen import EInkScreen
 from processed_message_tracker import ProcessedMessageTracker
 from pijuice import PiJuice
-import RPi.GPIO as GPIO
 
-logging.basicConfig(level=logging.DEBUG, format='%(name)s - %(levelname)s - %(message)s')
+# import RPi.GPIO as GPIO
+
+# logging.basicConfig(level=logging.DEBUG, format='%(name)s - %(levelname)s - %(message)s')
 e_ink_screen_lock = threading.Lock()
 processed_message_tracker = ProcessedMessageTracker()
 
@@ -22,28 +23,27 @@ STATUS_ROOT = "data"
 STATUS_POWER = "powerInput"
 
 
-def turn_on_led(pin):
-    GPIO.output(pin, GPIO.HIGH)
-
-
-def turn_off_led(pin):
-    GPIO.output(pin, GPIO.LOW)
-
-
-def blink_led(pin):
-    turn_on_led(pin)
-    time.sleep(0.5)
-    turn_off_led(pin)
-    time.sleep(0.5)
-    turn_on_led(pin)
-    time.sleep(0.5)
-    turn_off_led(pin)
-    print("LED blinked")
+# def turn_on_led(pin):
+#     GPIO.output(pin, GPIO.HIGH)
+#
+#
+# def turn_off_led(pin):
+#     GPIO.output(pin, GPIO.LOW)
+#
+#
+# def blink_led(pin):
+#     turn_on_led(pin)
+#     time.sleep(0.5)
+#     turn_off_led(pin)
+#     time.sleep(0.5)
+#     turn_on_led(pin)
+#     time.sleep(0.5)
+#     turn_off_led(pin)
+#     print("LED blinked")
 
 
 def get_status_payload(status, power_status='PRESENT', battery_percentage=0):
-    print('get_status_payload')
-    logging.info('get_status_payload')
+    # logging.info('get_status_payload')
     wired = power_status == 'PRESENT'
     if battery_percentage:
         wired = False
@@ -78,7 +78,7 @@ def get_charge_status():
         power_status = pijuice.status.GetStatus()[STATUS_ROOT][STATUS_POWER]
         charge_level = pijuice.status.GetChargeLevel()['data']
         print(power_status)
-        logging.info(f'Status: {power_status}, Level: {charge_level}')
+        # logging.info(f'Status: {power_status}, Level: {charge_level}')
         print(f'Status: {power_status}, Level: {charge_level}')
         return power_status, charge_level
         # instance.charge_level = PiJuiceHandler.get_charge_status(power_status, charge_level)
@@ -119,7 +119,7 @@ def on_message(client, userdata, msg):
                 img = Image.open(io.BytesIO(image_data))
                 with e_ink_screen_lock:
                     e_ink_screen.display_image_on_epd(img)
-                    blink_led(config["led_pin"])
+                    # blink_led(config["led_pin"])
                     time.sleep(5)
         except Exception as e:
             print("Error decoding and displaying the image:", str(e))
@@ -147,41 +147,41 @@ def main():
     config["topic_image_display"] = get_display_topic()
 
     led_pin = config["led_pin"]
-    try:
+    # try:
 
-        e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"])
-        e_ink_screen.run()
+    e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"])
+    e_ink_screen.run()
 
-        GPIO.setup(led_pin, GPIO.OUT)
+    # GPIO.setup(led_pin, GPIO.OUT)
 
-        client = mqtt.Client(client_id=str(uuid.uuid4()))
+    client = mqtt.Client(client_id=str(uuid.uuid4()))
 
-        if (config["password"]):
-            client.username_pw_set(config["username"], config["password"])
-            client.tls_set()
+    if (config["password"]):
+        client.username_pw_set(config["username"], config["password"])
+        client.tls_set()
 
-        # Set the callbacks
-        client.on_connect = on_connect
-        client.on_message = on_message
-        client.on_disconnect = on_disconnect
+    # Set the callbacks
+    client.on_connect = on_connect
+    client.on_message = on_message
+    client.on_disconnect = on_disconnect
 
-        # Configure Last Will and Testament
-        lw_status = get_status_payload('offline')
-        print(config["topic_device_status"])
-        client.will_set(config["topic_device_status"], payload=lw_status, qos=1, retain=True)
+    # Configure Last Will and Testament
+    lw_status = get_status_payload('offline')
+    print(config["topic_device_status"])
+    client.will_set(config["topic_device_status"], payload=lw_status, qos=1, retain=True)
 
-        # Connect to the broker
-        client.connect(host=config["broker_address"], port=config["broker_port"], keepalive=30)
+    # Connect to the broker
+    client.connect(host=config["broker_address"], port=config["broker_port"], keepalive=30)
 
-        blink_led(led_pin)
+    # blink_led(led_pin)
 
-        print("Started")
-        logging.info('Started')
+    print("Started")
+    logging.info('Started')
 
-        # Loop to maintain the connection and process incoming messages
-        client.loop_forever()
-    except KeyboardInterrupt:
-        turn_off_led(led_pin)
+    # Loop to maintain the connection and process incoming messages
+    client.loop_forever()
+    # except KeyboardInterrupt:
+    #     turn_off_led(led_pin)
 
 
 if __name__ == "__main__":
