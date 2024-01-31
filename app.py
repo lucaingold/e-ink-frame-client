@@ -11,7 +11,7 @@ import socket
 # from e_ink_screen_mock import EInkScreen
 from e_ink_screen import EInkScreen
 from processed_message_tracker import ProcessedMessageTracker
-from pijuice import PiJuice
+# from pijuice import PiJuice
 
 # import RPi.GPIO as GPIO
 
@@ -74,13 +74,14 @@ def get_ip():
 
 def get_charge_status():
     try:
-        pijuice = PiJuice(1, 0x14)
-        power_status = pijuice.status.GetStatus()[STATUS_ROOT][STATUS_POWER]
-        charge_level = pijuice.status.GetChargeLevel()['data']
-        print(power_status)
+        # pijuice = PiJuice(1, 0x14)
+        # power_status = pijuice.status.GetStatus()[STATUS_ROOT][STATUS_POWER]
+        # charge_level = pijuice.status.GetChargeLevel()['data']
+        # print(power_status)
         # logging.info(f'Status: {power_status}, Level: {charge_level}')
-        print(f'Status: {power_status}, Level: {charge_level}')
-        return power_status, charge_level
+        # print(f'Status: {power_status}, Level: {charge_level}')
+        # return power_status, charge_level
+        return 'PRESENT', 100
         # instance.charge_level = PiJuiceHandler.get_charge_status(power_status, charge_level)
     except Exception as e:
         print(e)
