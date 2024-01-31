@@ -131,6 +131,7 @@ def on_disconnect(client, userdata, rc):
     time.sleep(5)
     client.reconnect()
 
+
 def load_config():
     with open("config.json", "r") as f:
         return json.load(f)
@@ -148,6 +149,9 @@ def main():
 
     e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"])
     e_ink_screen.run()
+    current_mode = GPIO.getmode()
+
+    logging.info(current_mode)
 
     GPIO.setup(led_pin, GPIO.OUT)
 
