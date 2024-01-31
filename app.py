@@ -14,7 +14,8 @@ from processed_message_tracker import ProcessedMessageTracker
 from pijuice import PiJuice
 import RPi.GPIO as GPIO
 
-logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, filename='app.log', filemode='w',
+                    format='%(name)s - %(levelname)s - %(message)s')
 e_ink_screen_lock = threading.Lock()
 processed_message_tracker = ProcessedMessageTracker()
 
@@ -178,7 +179,7 @@ def main():
         print("Started")
         logging.info('Started')
 
-    # Loop to maintain the connection and process incoming messages
+        # Loop to maintain the connection and process incoming messages
         client.loop_forever()
     except KeyboardInterrupt:
         turn_off_led(led_pin)
