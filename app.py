@@ -2,6 +2,7 @@ import io
 import threading
 import time
 import uuid
+import logging
 
 import paho.mqtt.client as mqtt
 import json
@@ -13,6 +14,7 @@ from processed_message_tracker import ProcessedMessageTracker
 from pijuice import PiJuice
 import RPi.GPIO as GPIO
 
+logging.basicConfig(filename='app.log', filemode='w', format='%(name)s - %(levelname)s - %(message)s')
 e_ink_screen_lock = threading.Lock()
 processed_message_tracker = ProcessedMessageTracker()
 
@@ -41,6 +43,7 @@ def blink_led(pin):
 
 def get_status_payload(status, power_status='PRESENT', battery_percentage=0):
     print('get_status_payload')
+    logging.info('get_status_payload')
     wired = power_status == 'PRESENT'
     if battery_percentage:
         wired = False
@@ -75,6 +78,7 @@ def get_charge_status():
         power_status = pijuice.status.GetStatus()[STATUS_ROOT][STATUS_POWER]
         charge_level = pijuice.status.GetChargeLevel()['data']
         print(power_status)
+        logging.info(f'Status: {power_status}, Level: {charge_level}')
         print(f'Status: {power_status}, Level: {charge_level}')
         return power_status, charge_level
         # instance.charge_level = PiJuiceHandler.get_charge_status(power_status, charge_level)
@@ -172,8 +176,9 @@ def main():
         blink_led(led_pin)
 
         print("Started")
+        logging.info('Started')
 
-        # Loop to maintain the connection and process incoming messages
+    # Loop to maintain the connection and process incoming messages
         client.loop_forever()
     except KeyboardInterrupt:
         turn_off_led(led_pin)
