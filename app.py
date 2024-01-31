@@ -3,7 +3,6 @@ import threading
 import time
 import uuid
 import logging
-
 import paho.mqtt.client as mqtt
 import json
 from PIL import Image
@@ -15,7 +14,7 @@ from pijuice import PiJuice
 
 import RPi.GPIO as GPIO
 
-# logging.basicConfig(level=logging.DEBUG, format='%(name)s - %(levelname)s - %(message)s')
+logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 e_ink_screen_lock = threading.Lock()
 processed_message_tracker = ProcessedMessageTracker()
 
@@ -39,11 +38,12 @@ def blink_led(pin):
     turn_on_led(pin)
     time.sleep(0.5)
     turn_off_led(pin)
-    print("LED blinked")
+    logging.info("LED blinked")
 
 
-def get_status_payload(status, power_status='PRESENT', battery_percentage=0):
-    # logging.info('get_status_payload')
+def get_status_payload(status):
+    power_status, battery_percentage = get_charge_status()
+    logging.info('get_status_payload' + str(battery_percentage))
     wired = power_status == 'PRESENT'
     if battery_percentage:
         wired = False
@@ -77,14 +77,11 @@ def get_charge_status():
         pijuice = PiJuice(1, 0x14)
         power_status = pijuice.status.GetStatus()[STATUS_ROOT][STATUS_POWER]
         charge_level = pijuice.status.GetChargeLevel()['data']
-        print(power_status)
         logging.info(f'Status: {power_status}, Level: {charge_level}')
-        print(f'Status: {power_status}, Level: {charge_level}')
         return power_status, charge_level
-        # return 'PRESENT', 100
         # instance.charge_level = PiJuiceHandler.get_charge_status(power_status, charge_level)
     except Exception as e:
-        print(e)
+        logging.error(e)
 
 
 def get_status_topic():
@@ -102,17 +99,17 @@ def get_display_topic():
 
 # Callback when the client connects to the broker
 def on_connect(client, userdata, flags, rc):
-    print("Connected with result code " + str(rc))
+    logging.info("Connected with result code " + str(rc))
     # Subscribe to a topic upon successful connection
     client.subscribe(config["topic_image_display"])
-    print(f'Subscribed to {config["topic_image_display"]}')
-    client.publish(config["topic_device_status"], payload=get_status_payload('online', get_charge_status()), qos=1,
+    logging.info(f'Subscribed to {config["topic_image_display"]}')
+    client.publish(config["topic_device_status"], payload=get_status_payload('online'), qos=1,
                    retain=True)
 
 
 # Callback when a message is received from the broker
 def on_message(client, userdata, msg):
-    print("Received message on topic {}".format(msg.topic))
+    logging.info("Received message on topic {}".format(msg.topic))
     if msg.topic == config["topic_image_display"]:
         try:
             if processed_message_tracker.should_process_message(msg.mid, msg.timestamp):
@@ -123,17 +120,16 @@ def on_message(client, userdata, msg):
                     blink_led(config["led_pin"])
                     time.sleep(5)
         except Exception as e:
-            print("Error decoding and displaying the image:", str(e))
+            logging.error("Error decoding and displaying the image:", str(e))
 
 
 # Callback when the client is disconnected from the broker
 def on_disconnect(client, userdata, rc):
-    print("Disconnected from the broker. Will publish offline status. Trying to reconnect...")
+    logging.info("Disconnected from the broker. Will publish offline status. Trying to reconnect...")
     client.publish(config["topic_device_status"], payload=get_status_payload('offline'), qos=1, retain=True)
     # Add a delay before attempting to reconnect
     time.sleep(5)
     client.reconnect()
-
 
 def load_config():
     with open("config.json", "r") as f:
@@ -168,7 +164,7 @@ def main():
 
     # Configure Last Will and Testament
     lw_status = get_status_payload('offline')
-    print(config["topic_device_status"])
+    logging.info(config["topic_device_status"])
     client.will_set(config["topic_device_status"], payload=lw_status, qos=1, retain=True)
 
     # Connect to the broker
@@ -176,7 +172,7 @@ def main():
 
     blink_led(led_pin)
 
-    print("Started")
+    logging.info("Started")
 
     # Loop to maintain the connection and process incoming messages
     client.loop_forever()
