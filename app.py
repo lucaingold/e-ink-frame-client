@@ -22,12 +22,12 @@ STATUS_POWER = "powerInput"
 
 def turn_on_led(pin):
     GPIO.output(pin, GPIO.HIGH)
-    print("LED turned on")
+    # print("LED turned on")
 
 
 def turn_off_led(pin):
     GPIO.output(pin, GPIO.LOW)
-    print("LED turned off")
+    # print("LED turned off")
 
 
 def blink_led(pin):
@@ -42,6 +42,7 @@ def blink_led(pin):
 
 
 def get_status_payload(status, power_status='PRESENT', battery_percentage=0):
+    print(get_status_payload)
     wired = power_status == 'PRESENT'
     if battery_percentage:
         wired = False
