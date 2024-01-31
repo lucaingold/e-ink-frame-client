@@ -14,13 +14,8 @@ from processed_message_tracker import ProcessedMessageTracker
 from pijuice import PiJuice
 import RPi.GPIO as GPIO
 
-logger = logging.getLogger('einkscreen')
-logger.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(levelname)s - %(message)s')
-fh = logging.FileHandler('/var/log/supervisor/einkscreen.log')
-fh.setLevel(logging.DEBUG)
-fh.setFormatter(formatter)
-logger.addHandler(fh)
+logging.basicConfig(level=logging.DEBUG, filename='app.log', filemode='w',
+                    format='%(name)s - %(levelname)s - %(message)s')
 e_ink_screen_lock = threading.Lock()
 processed_message_tracker = ProcessedMessageTracker()
 
@@ -49,7 +44,7 @@ def blink_led(pin):
 
 def get_status_payload(status, power_status='PRESENT', battery_percentage=0):
     print('get_status_payload')
-    logger.info('get_status_payload')
+    logging.info('get_status_payload')
     wired = power_status == 'PRESENT'
     if battery_percentage:
         wired = False
@@ -84,7 +79,7 @@ def get_charge_status():
         power_status = pijuice.status.GetStatus()[STATUS_ROOT][STATUS_POWER]
         charge_level = pijuice.status.GetChargeLevel()['data']
         print(power_status)
-        logger.info(f'Status: {power_status}, Level: {charge_level}')
+        logging.info(f'Status: {power_status}, Level: {charge_level}')
         print(f'Status: {power_status}, Level: {charge_level}')
         return power_status, charge_level
         # instance.charge_level = PiJuiceHandler.get_charge_status(power_status, charge_level)
@@ -182,7 +177,7 @@ def main():
         blink_led(led_pin)
 
         print("Started")
-        logger.info('Started')
+        logging.info('Started')
 
         # Loop to maintain the connection and process incoming messages
         client.loop_forever()
