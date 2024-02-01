@@ -39,8 +39,15 @@ sudo apt-get install -y python3-pip
 sudo apt-get install -y python3-pil
 sudo pip3 install -y RPi.GPIO
 sudo apt-get install  -y python3-venv
+
+sudo apt-get install libopenjp2-7
 ```
 
+##### dietpi
+sudo apt-get install build-essential
+sudo apt-get install python3-dev
+sudo apt install libopenblas-dev
+Y
 #### Enable SPI
 ```
 sudo raspi-config
@@ -56,12 +63,13 @@ SPI State = On
 ```
 python3 -m venv --system-site-packages .venv
 source .venv/bin/activate
-sudo apt-get install libopenjp2-7
+pip3 install -r requirements.txt
 ```
 
 #### Install OMNI EPD Library 
 ```
 pip3 install git+https://github.com/robweber/omni-epd.git#egg=waveshare_epd.it8951
+pip3 install git+https://github.com/robweber/omni-epd.git#egg=omni-epd
 ```
 
 ##### Alternative
