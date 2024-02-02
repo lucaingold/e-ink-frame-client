@@ -11,7 +11,6 @@ import socket
 from e_ink_screen import EInkScreen
 from processed_message_tracker import ProcessedMessageTracker
 from pijuice import PiJuice
-
 import RPi.GPIO as GPIO
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -81,7 +80,9 @@ def get_charge_status():
         return power_status, charge_level
         # instance.charge_level = PiJuiceHandler.get_charge_status(power_status, charge_level)
     except Exception as e:
+        logging(f'Error while reading pijuice status')
         logging.error(e)
+        return None, None  # Return default values in case of an exception
 
 
 def get_status_topic():
