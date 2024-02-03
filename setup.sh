@@ -63,14 +63,14 @@ function install_service(){
 function uninstall_service(){
   if (service_installed); then
     # stop if running and remove service files
-    sudo systemctl stop pycasso
-    sudo systemctl disable pycasso
+    sudo systemctl stop einkscreen
+    sudo systemctl disable einkscreen
     sudo rm "${SERVICE_DIR}/${SERVICE_FILE}"
     sudo systemctl daemon-reload
 
-    echo -e "pycasso service was successfully uninstalled"
+    echo -e "einkscreen service was successfully uninstalled"
   else
-    echo -e "${RED}pycasso service is already uninstalled.${RESET}"
+    echo -e "${RED}einkscreen service is already uninstalled.${RESET}"
   fi
 }
 
