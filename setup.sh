@@ -60,4 +60,18 @@ function install_service(){
   cd "$HOME" || return
 }
 
+function uninstall_service(){
+  if (service_installed); then
+    # stop if running and remove service files
+    sudo systemctl stop pycasso
+    sudo systemctl disable pycasso
+    sudo rm "${SERVICE_DIR}/${SERVICE_FILE}"
+    sudo systemctl daemon-reload
+
+    echo -e "pycasso service was successfully uninstalled"
+  else
+    echo -e "${RED}pycasso service is already uninstalled.${RESET}"
+  fi
+}
+
 install_service

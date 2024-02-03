@@ -3,11 +3,13 @@ Description=A system to send images to an E-Paper display through a Raspberry PI
 After=network.target
 
 [Service]
-User=root
+User=luca
 WorkingDirectory=${HOME}/e-ink-frame-client/
 ExecStart=dbus-run-session -- bash ${HOME}/e-ink-frame-client/start.sh
 Type=idle
 RemainAfterExit=false
+Restart=always
+Environment="PYTHONPATH=$PYTHONPATH:/home/luca/e-ink-frame-client/.venv/lib/python3.9/site-packages"
 
 [Install]
 WantedBy=multi-user.target
