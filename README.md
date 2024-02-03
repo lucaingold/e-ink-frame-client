@@ -41,13 +41,16 @@ sudo pip3 install -y RPi.GPIO
 sudo apt-get install  -y python3-venv
 
 sudo apt-get install libopenjp2-7
+sudo apt-get install gnome-keyring
+
 ```
 
 ##### dietpi
 sudo apt-get install build-essential
 sudo apt-get install python3-dev
 sudo apt install libopenblas-dev
-Y
+sudo apt-get install libopenjp2-7
+
 #### Enable SPI
 ```
 sudo raspi-config
@@ -95,5 +98,10 @@ sudo chmod +x start.sh
 sudo apt-get install pijuice-base
 pijuice_cli
 
+##### DietPi (pijuice)
+dietpi-software install 100 
+
+
 ### Lowering Raspberry Pi Zero WH power consumption
 https://www.cnx-software.com/2021/12/09/raspberry-pi-zero-2-w-power-consumption/
+

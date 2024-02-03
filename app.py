@@ -12,6 +12,7 @@ from e_ink_screen import EInkScreen
 from processed_message_tracker import ProcessedMessageTracker
 from pijuice import PiJuice
 import RPi.GPIO as GPIO
+import atexit
 
 logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
 e_ink_screen_lock = threading.Lock()
@@ -80,8 +81,7 @@ def get_charge_status():
         return power_status, charge_level
         # instance.charge_level = PiJuiceHandler.get_charge_status(power_status, charge_level)
     except Exception as e:
-        logging(f'Error while reading pijuice status')
-        logging.error(e)
+        logging.error(f'Error while reading pijuice status', e)
         return None, None  # Return default values in case of an exception
 
 
@@ -138,52 +138,66 @@ def load_config():
         return json.load(f)
 
 
+def shutdown_handler():
+    on_disconnect(client, None, None)
+    logging.info("Shutting down gracefully...")
+
+
 def main():
-    global config
-    global e_ink_screen
-    config = load_config()
-    config["topic_device_status"] = get_status_topic()
-    config["topic_image_display"] = get_display_topic()
+    try:
+        global config
+        global e_ink_screen
+        global client
+        config = load_config()
+        config["topic_device_status"] = get_status_topic()
+        config["topic_image_display"] = get_display_topic()
 
-    led_pin = config["led_pin"]
-    # try:
+        led_pin = config["led_pin"]
+        # try:
 
-    e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"])
-    e_ink_screen.run()
-    current_mode = GPIO.getmode()
+        e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"])
+        e_ink_screen.run()
+        current_mode = GPIO.getmode()
 
-    logging.info(current_mode)
+        logging.info(current_mode)
 
-    GPIO.setup(led_pin, GPIO.OUT)
+        GPIO.setup(led_pin, GPIO.OUT)
 
-    client = mqtt.Client(client_id=str(uuid.uuid4()))
+        client = mqtt.Client(client_id=str(uuid.uuid4()))
 
-    if (config["password"]):
-        client.username_pw_set(config["username"], config["password"])
-        client.tls_set()
+        if (config["password"]):
+            client.username_pw_set(config["username"], config["password"])
+            client.tls_set()
 
-    # Set the callbacks
-    client.on_connect = on_connect
-    client.on_message = on_message
-    client.on_disconnect = on_disconnect
+        atexit.register(shutdown_handler)
 
-    # Configure Last Will and Testament
-    lw_status = get_status_payload('offline')
-    logging.info(config["topic_device_status"])
-    client.will_set(config["topic_device_status"], payload=lw_status, qos=1, retain=True)
+        # Set the callbacks
+        client.on_connect = on_connect
+        client.on_message = on_message
+        client.on_disconnect = on_disconnect
 
-    # Connect to the broker
-    client.connect(host=config["broker_address"], port=config["broker_port"], keepalive=30)
+        atexit.register(on_disconnect)
 
-    blink_led(led_pin)
+        # Configure Last Will and Testament
+        lw_status = get_status_payload('offline')
+        logging.info(config["topic_device_status"])
+        client.will_set(config["topic_device_status"], payload=lw_status, qos=1, retain=True)
 
-    logging.info("Started")
+        # Connect to the broker
+        client.connect(host=config["broker_address"], port=config["broker_port"], keepalive=30)
 
-    # Loop to maintain the connection and process incoming messages
-    client.loop_forever()
-    # except KeyboardInterrupt:
-    #     turn_off_led(led_pin)
+        blink_led(led_pin)
 
+        logging.info("Started")
+
+        # Loop to maintain the connection and process incoming messages
+        client.loop_forever()
+        # except KeyboardInterrupt:
+        #     turn_off_led(led_pin)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        shutdown_handler()
 
 if __name__ == "__main__":
     main()
