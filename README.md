@@ -105,3 +105,32 @@ dietpi-software install 100
 ### Lowering Raspberry Pi Zero WH power consumption
 https://www.cnx-software.com/2021/12/09/raspberry-pi-zero-2-w-power-consumption/
 
+
+### tuning
+
+sudo nano /boot/config.txt
+
+add
+```
+#speedup booting
+dtoverlay=disable-bt
+disable_splash=1
+boot_delay=0
+
+camera_auto_detect=0
+display_auto_detect=0
+#dtparam=audio=on
+```
+
+#### static ip
+sudo nano /etc/dhcpcd.conf
+
+interface eth0
+static ip_address=192.168.1.100/24     # The IP you want
+static routers=192.168.1.1             # The gateway IP
+static domain_name_servers=192.168.1.1 # DNS-Server
+
+and disable the dhcpcd.service
+
+sudo systemctl disable dhcpcd
+

@@ -44,6 +44,7 @@ def blink_led(pin):
 def get_status_payload(status):
     power_status, battery_percentage = get_charge_status()
     logging.info('get_status_payload' + str(battery_percentage))
+    logging.info('status: ' + str(power_status))
     wired = power_status == 'PRESENT'
     if battery_percentage:
         wired = False

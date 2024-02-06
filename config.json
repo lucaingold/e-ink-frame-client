@@ -8,5 +8,6 @@
   "topic_image_display": "device/{device_id}/image/display",
   "topic_device_status": "device/{device_id}/status/online",
   "screen_height": 1200,
-  "screen_width": 1600
+  "screen_width": 1600,
+  "led_pin": 16
 }
