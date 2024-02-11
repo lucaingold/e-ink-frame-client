@@ -1,6 +1,10 @@
+import io
 import logging
 import os
 from omni_epd import displayfactory, EPDNotFoundError
+import threading
+import time
+from PIL import Image
 
 DISPLAY_TYPE = "waveshare_epd.it8951"
 
@@ -17,7 +21,10 @@ class EInkScreen:
         self.image_display = None
         self.width = screen_width
         self.height = screen_height
-        pass
+
+        self.lock = threading.Lock()
+
+    pass
 
     def run(self):
         logging.info("einkframe has started")
@@ -41,6 +48,15 @@ class EInkScreen:
             exit()
 
     pass
+
+    def display_image(self, image_data):
+        try:
+            img = Image.open(io.BytesIO(image_data))
+            with self.lock:
+                self.e_ink_screen.display_image_on_epd(img)
+                time.sleep(5)
+        except Exception as e:
+            logging.error("Error decoding and displaying the image:", str(e))
 
     def display_image_on_epd(self, display_image):
         self.image_display = display_image.copy()
