@@ -53,6 +53,10 @@ class MQTTClientManager:
             except Exception as e:
                 logging.error("Error decoding and displaying the image:", str(e))
 
+    def send_status_msg(self, mqtt_status):
+        self.client.publish(self.config["topic_device_status"], payload=self.get_status_payload(mqtt_status), qos=1,
+                            retain=True)
+
     def on_disconnect(self, client, userdata, rc):
         logging.info("Disconnected from the broker. Will publish offline status. Trying to reconnect...")
         client.publish(self.config["topic_device_status"], payload=self.get_status_payload('offline'), qos=1,
@@ -123,4 +127,3 @@ class MQTTClientManager:
         client.connect(host=self.config["broker_address"], port=self.config["broker_port"], keepalive=30)
 
         self.client.loop_forever()
-

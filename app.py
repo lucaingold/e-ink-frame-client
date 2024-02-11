@@ -6,7 +6,7 @@ import paho.mqtt.client as mqtt
 import json
 from PIL import Image
 import socket
-# from src.mock.e_ink_screen_mock import EInkScreen
+from src.mock.e_ink_screen_mock import EInkScreen
 from src.e_ink_screen import EInkScreen
 # from src.mock.battery_manager_mock import BatteryManager
 from src.battery_manager import BatteryManager
@@ -45,23 +45,6 @@ def load_config():
         return json.load(f)
 
 
-# def shutdown_handler():
-#     client.publish(config["topic_device_status"], payload=get_status_payload('offline'), qos=1, retain=True)
-#     logging.info("Shutting down gracefully...")
-
-
-def safe_pijuice_shutdown():
-    # Remove power to PiJuice MCU IO pins
-    pijuice.power.SetSystemPowerSwitch(0)
-    # In 5 seconds we are not so nice - Remove 5V power to RPi
-    pijuice.power.SetPowerOff(5)
-    # Enable wakeup alarm
-    pijuice.rtcAlarm.SetWakeupEnabled(True)
-    # But try to shut down nicely first
-    os.system("sudo shutdown -h 0")
-    sys.exit()
-
-
 def main():
     try:
         global config
@@ -79,10 +62,10 @@ def main():
         mqtt_client_manager = MQTTClientManager(config, e_ink_screen, battery_manager)
         mqtt_client_manager.start()
 
-        status_publisher = StatusScheduler()
-        status_publisher.start()
+        status_manager = StatusScheduler(config, battery_manager, mqtt_client_manager)
+        status_manager.start()
 
-        logging.info("Started")
+        logging.info("--- e-ink client started ---")
 
     except KeyboardInterrupt:
         pass

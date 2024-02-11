@@ -1,13 +1,14 @@
 {
-  "broker_address": "broker"
+  "broker_address": "1267e5cf620940ea957ccaedca8add6a.s2.eu.hivemq.cloud",
   "broker_port": 8883,
   "username": "einkframe",
-  "password": "123",
-  "device_id": "b8:27:eb:1a:27:00",
+  "password": "36WLktfFjTr2J0LxZ52ZFVuFJs",
+  "device_id": "00:27:eb:1a:27:00",
   "device_id_placeholder": "{device_id}",
   "topic_image_display": "device/{device_id}/image/display",
   "topic_device_status": "device/{device_id}/status/online",
   "screen_height": 1200,
   "screen_width": 1600,
-  "led_pin": 16
+  "led_pin": 16,
+  "should_shutdown_on_battery": true
 }
