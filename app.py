@@ -6,7 +6,7 @@ import paho.mqtt.client as mqtt
 import json
 from PIL import Image
 import socket
-from src.mock.e_ink_screen_mock import EInkScreen
+# from src.mock.e_ink_screen_mock import EInkScreen
 from src.e_ink_screen import EInkScreen
 # from src.mock.battery_manager_mock import BatteryManager
 from src.battery_manager import BatteryManager
