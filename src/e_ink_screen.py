@@ -61,7 +61,7 @@ class EInkScreen:
             logging.error("Error decoding and displaying the image:", str(e))
 
     def enhance_brightness(self, img):
-        logging.info("Increase brightness by ", self.brightness_factor)
+        logging.info("Increase brightness by ", str(self.brightness_factor))
         enhancer = ImageEnhance.Brightness(img)
         return enhancer.enhance(self.brightness_factor)
 
