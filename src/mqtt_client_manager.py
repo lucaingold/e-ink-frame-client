@@ -112,7 +112,7 @@ class MQTTClientManager:
 
         client = mqtt.Client(client_id=str(uuid.uuid4()))
 
-        if (self.config["password"]):
+        if self.config["password"]:
             client.username_pw_set(self.config["username"], self.config["password"])
             client.tls_set()
 

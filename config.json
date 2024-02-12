@@ -10,5 +10,6 @@
   "screen_height": 1200,
   "screen_width": 1600,
   "led_pin": 16,
-  "should_shutdown_on_battery": true
+  "should_shutdown_on_battery": true,
+  "brightness_factor": 1.0
 }

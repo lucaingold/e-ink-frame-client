@@ -1,15 +1,15 @@
 import io
 import logging
-import os
 from omni_epd import displayfactory, EPDNotFoundError
 import threading
 import time
-from PIL import Image
+from PIL import Image, ImageEnhance
 
 DISPLAY_TYPE = "waveshare_epd.it8951"
 
+
 class EInkScreen:
-    def __init__(self, screen_width=1600, screen_height=1200):
+    def __init__(self, screen_width=1600, screen_height=1200, brightness_factor=1.0):
         # Config Dictionary for omni-epd
         self.config_dict = {}
 
@@ -23,6 +23,8 @@ class EInkScreen:
         self.height = screen_height
 
         self.lock = threading.Lock()
+
+        self.brightness_factor = brightness_factor
 
     pass
 
@@ -53,10 +55,15 @@ class EInkScreen:
         try:
             img = Image.open(io.BytesIO(image_data))
             with self.lock:
-                self.e_ink_screen.display_image_on_epd(img)
+                brightened_img = self.enhance_brightness(img)
+                self.e_ink_screen.display_image_on_epd(brightened_img)
                 time.sleep(5)
         except Exception as e:
             logging.error("Error decoding and displaying the image:", str(e))
+
+    def enhance_brightness(self, img):
+        enhancer = ImageEnhance.Brightness(img)
+        return enhancer.enhance(self.brightness_factor)
 
     def display_image_on_epd(self, display_image):
         self.image_display = display_image.copy()

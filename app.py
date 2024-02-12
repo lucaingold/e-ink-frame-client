@@ -1,11 +1,4 @@
-import io
-import os
-import sys
-import uuid
-import paho.mqtt.client as mqtt
 import json
-from PIL import Image
-import socket
 # from src.mock.e_ink_screen_mock import EInkScreen
 from src.e_ink_screen import EInkScreen
 # from src.mock.battery_manager_mock import BatteryManager
@@ -55,7 +48,7 @@ def main():
         config["topic_device_status"] = get_status_topic()
         config["topic_image_display"] = get_display_topic()
 
-        e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"])
+        e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"], config["brightness_factor"])
         e_ink_screen.run()
 
         battery_manager = BatteryManager(config)
