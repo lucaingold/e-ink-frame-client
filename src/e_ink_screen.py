@@ -74,6 +74,7 @@ class EInkScreen:
         brightness = sum(index * value for index, value in enumerate(histogram)) / pixels
 
         # If the proportion of dark pixels is below the threshold, increase brightness
+        logging.info("Image details - brightness: %s, darkness_threshold: %s", str(brightness), str(self.darkness_threshold))
         if brightness < self.darkness_threshold:
             logging.info("Increase brightness by %s", str(self.brightness_factor))
             enhancer = ImageEnhance.Brightness(img)
