@@ -51,12 +51,11 @@ def main():
 
         battery_manager = BatteryManager(config)
         mqtt_client_manager = MQTTClientManager(config, e_ink_screen, battery_manager)
-        mqtt_client_manager.start()
-
         status_manager = StatusScheduler(config, battery_manager, mqtt_client_manager)
         status_manager.start()
 
-        logging.info("--- e-ink client started ---")
+        # mqtt_client_manager = MQTTClientManager(config, e_ink_screen, battery_manager)
+        mqtt_client_manager.run_mqtt_client()
 
     except KeyboardInterrupt:
         pass
