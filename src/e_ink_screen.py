@@ -63,7 +63,7 @@ class EInkScreen:
 
     def enhance_brightness(self, img):
         logging.error("Increase brightness by ", self.brightness_factor)
-        enhancer = ImageEnhance.Bright
+        enhancer = ImageEnhance.Brightness(img)
         return enhancer.enhance(self.brightness_factor)
 
     def display_image_on_epd(self, display_image):
