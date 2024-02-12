@@ -74,13 +74,23 @@ class EInkScreen:
         brightness = sum(index * value for index, value in enumerate(histogram)) / pixels
 
         # If the proportion of dark pixels is below the threshold, increase brightness
-        logging.info("Image details - brightness: %s, darkness_threshold: %s", str(brightness), str(self.darkness_threshold))
+        logging.info("Image details - effective brightness: %s, darkness_threshold: %s, brightness_factor: %s",
+                     str(brightness), str(self.darkness_threshold), str(self.brightness_factor))
         if brightness < self.darkness_threshold:
-            logging.info("Increase brightness by %s", str(self.brightness_factor))
+            brightness_factor = self.adjust_brightness_factor(brightness)
+            logging.info("Increase brightness by %s", str(brightness_factor))
             enhancer = ImageEnhance.Brightness(img)
             img = enhancer.enhance(self.brightness_factor)
 
         return img
+
+    def adjust_brightness_factor(self, brightness):
+        if brightness <= 100:
+            return self.brightness_factor + 0.2
+        elif 100 < brightness < 110:
+            return self.brightness_factor
+        else:
+            return self.brightness_factor - 0.2
 
     def display_image_on_epd(self, display_image):
         self.image_display = display_image.copy()
