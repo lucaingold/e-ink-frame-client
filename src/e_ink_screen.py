@@ -87,7 +87,7 @@ class EInkScreen:
     def adjust_brightness_factor(self, brightness):
         if brightness <= 100:
             return self.brightness_factor + 0.2
-        elif 100 < brightness < 110:
+        elif 100 < brightness < 105:
             return self.brightness_factor
         else:
             return self.brightness_factor - 0.2
