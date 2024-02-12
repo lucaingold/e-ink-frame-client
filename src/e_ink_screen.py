@@ -25,6 +25,7 @@ class EInkScreen:
         self.lock = threading.Lock()
 
         self.brightness_factor = brightness_factor
+        self.darkness_threshold = darkness_threshold
 
     pass
 
@@ -65,17 +66,15 @@ class EInkScreen:
     #     enhancer = ImageEnhance.Brightness(img)
     #     return enhancer.enhance(self.brightness_factor)
 
-    def enhance_brightness(self, img, darkness_threshold):
+    def enhance_brightness(self, img):
         # Measure darkness of the image
-        dark_pixels = 0
-        total_pixels = img.width * img.height
-        for pixel in img.getdata():
-            brightness = sum(pixel) / 3  # Convert RGB to grayscale
-            if brightness < darkness_threshold:
-                dark_pixels += 1
+        img_gray = img.convert('L')
+        histogram = img_gray.histogram()
+        pixels = sum(histogram)
+        brightness = sum(index * value for index, value in enumerate(histogram)) / pixels
 
         # If the proportion of dark pixels is below the threshold, increase brightness
-        if dark_pixels / total_pixels < darkness_threshold:
+        if brightness < self.darkness_threshold:
             logging.info("Increase brightness by %s", str(self.brightness_factor))
             enhancer = ImageEnhance.Brightness(img)
             img = enhancer.enhance(self.brightness_factor)

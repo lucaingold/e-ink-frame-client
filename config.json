@@ -12,5 +12,5 @@
   "led_pin": 16,
   "should_shutdown_on_battery": true,
   "brightness_factor": 1.0,
-  "darkness_threshold": 0.5
+  "darkness_threshold": 100
 }
