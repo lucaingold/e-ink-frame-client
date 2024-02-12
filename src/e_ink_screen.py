@@ -53,9 +53,8 @@ class EInkScreen:
 
     def display_image(self, image_data):
         try:
-            img = Image.open(io.BytesIO(image_data))
             with self.lock:
-                brightened_img = self.enhance_brightness(img)
+                brightened_img = self.enhance_brightness(image_data)
                 self.e_ink_screen.display_image_on_epd(brightened_img)
                 time.sleep(5)
         except Exception as e:
