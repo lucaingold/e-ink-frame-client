@@ -5,8 +5,6 @@ from src.e_ink_screen import EInkScreen
 from src.battery_manager import BatteryManager
 from src.mqtt_client_manager import MQTTClientManager
 from src.processed_message_tracker import ProcessedMessageTracker
-import atexit
-import time
 import threading
 import logging
 
@@ -48,7 +46,7 @@ def main():
         config["topic_device_status"] = get_status_topic()
         config["topic_image_display"] = get_display_topic()
 
-        e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"], config["brightness_factor"])
+        e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"], config["brightness_factor"], config["darkness_threshold"])
         e_ink_screen.run()
 
         battery_manager = BatteryManager(config)

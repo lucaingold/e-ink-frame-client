@@ -11,5 +11,6 @@
   "screen_width": 1600,
   "led_pin": 16,
   "should_shutdown_on_battery": true,
-  "brightness_factor": 1.0
+  "brightness_factor": 1.0,
+  "darkness_threshold": 0.5
 }

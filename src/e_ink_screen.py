@@ -9,7 +9,7 @@ DISPLAY_TYPE = "waveshare_epd.it8951"
 
 
 class EInkScreen:
-    def __init__(self, screen_width=1600, screen_height=1200, brightness_factor=1.0):
+    def __init__(self, screen_width=1600, screen_height=1200, brightness_factor=1.0, darkness_threshold=0.5):
         # Config Dictionary for omni-epd
         self.config_dict = {}
 
@@ -60,10 +60,27 @@ class EInkScreen:
         except Exception as e:
             logging.error("Error decoding and displaying the image:", str(e))
 
-    def enhance_brightness(self, img):
-        logging.info("Increase brightness by %s", str(self.brightness_factor))
-        enhancer = ImageEnhance.Brightness(img)
-        return enhancer.enhance(self.brightness_factor)
+    # def enhance_brightness(self, img):
+    #     logging.info("Increase brightness by %s", str(self.brightness_factor))
+    #     enhancer = ImageEnhance.Brightness(img)
+    #     return enhancer.enhance(self.brightness_factor)
+
+    def enhance_brightness(self, img, darkness_threshold):
+        # Measure darkness of the image
+        dark_pixels = 0
+        total_pixels = img.width * img.height
+        for pixel in img.getdata():
+            brightness = sum(pixel) / 3  # Convert RGB to grayscale
+            if brightness < darkness_threshold:
+                dark_pixels += 1
+
+        # If the proportion of dark pixels is below the threshold, increase brightness
+        if dark_pixels / total_pixels < darkness_threshold:
+            logging.info("Increase brightness by %s", str(self.brightness_factor))
+            enhancer = ImageEnhance.Brightness(img)
+            img = enhancer.enhance(self.brightness_factor)
+
+        return img
 
     def display_image_on_epd(self, display_image):
         self.image_display = display_image.copy()
