@@ -48,7 +48,7 @@ class MQTTClientManager:
                     image_data = msg.payload
                     img = Image.open(io.BytesIO(image_data))
                     with e_ink_screen_lock:
-                        self.e_ink_screen.display_image_on_epd(img)
+                        self.e_ink_screen.display_image(img)
                         time.sleep(5)
             except Exception as e:
                 logging.error("Error decoding and displaying the image:", str(e))

@@ -20,5 +20,8 @@ class EInkScreen:
     def set_rotate(width, height, rotate=0):
         pass
 
+    def display_image(self, image_data):
+        pass
+
     def display_image_on_epd(self, display_image):
         return
