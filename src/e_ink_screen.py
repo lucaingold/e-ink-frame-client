@@ -55,8 +55,8 @@ class EInkScreen:
     def display_image(self, image_data):
         try:
             with self.lock:
-                brightened_img = self.enhance_brightness(image_data)
-                self.display_image_on_epd(brightened_img)
+                # brightened_img = self.enhance_brightness(image_data)
+                self.display_image_on_epd(image_data)
                 time.sleep(5)
         except Exception as e:
             logging.error("Error decoding and displaying the image:", str(e))
