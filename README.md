@@ -125,12 +125,36 @@ display_auto_detect=0
 #### static ip
 sudo nano /etc/dhcpcd.conf
 
-interface eth0
-static ip_address=192.168.1.100/24     # The IP you want
-static routers=192.168.1.1             # The gateway IP
-static domain_name_servers=192.168.1.1 # DNS-Server
+interface wlan0
+static ip_address=192.168.0.35/24
+static routers=192.168.0.254
+static domain_name_servers=192.168.0.254 8.8.8.8
 
-and disable the dhcpcd.service
+and (!)
 
-sudo systemctl disable dhcpcd
+noipv6
+ipv4only
+noarp
 
+Additional:
+sudo systemctl disable e2scrub_reap.service
+sudo systemctl disable avahi-daemon.service
+sudo systemctl disable rng-tools-debian.service
+sudo systemctl disable keyboard-setup.service
+sudo systemctl disable systemd-udev-trigger.service
+sudo systemctl disable dphys-swapfile.service
+sudo systemctl disable systemd-udev-trigger.service
+sudo systemctl disable ModemManager.service
+sudo systemctl disable polkit.service
+sudo systemctl disable raspi-config.service
+sudo systemctl disable apt-daily.service
+
+cmdline.txt add 'quiet' before root
+cmdline.txt add fsck.mode=skip
+
+sudo nano /etc/fstab
+Comment out /boot-line (first line)
+
+For testing
+systemd-analyze
+systemd-analyze blame

@@ -7,7 +7,7 @@ DISPLAY_TYPE = "waveshare_epd.it8951"
 
 
 class EInkScreen:
-    def __init__(self, screen_width=1600, screen_height=1200, brightness_factor=1.0):
+    def __init__(self, screen_width=1600, screen_height=1200, brightness_factor=1.0, darkness_threshold=0.5):
         pass
 
     def run(self):

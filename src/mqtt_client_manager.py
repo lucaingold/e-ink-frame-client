@@ -76,6 +76,7 @@ class MQTTClientManager:
             'status': status,
             'wired': wired,
             'battery': battery_percentage,
+            'timestamp': time.time()
         })
 
     def get_ip(self):

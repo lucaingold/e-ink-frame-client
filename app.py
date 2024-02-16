@@ -1,5 +1,5 @@
 import json
-# from src.mock.e_ink_screen_mock import EInkScreen
+from src.mock.e_ink_screen_mock import EInkScreen
 from src.e_ink_screen import EInkScreen
 # from src.mock.battery_manager_mock import BatteryManager
 from src.battery_manager import BatteryManager
@@ -39,9 +39,6 @@ def load_config():
 def main():
     try:
         global config
-        global e_ink_screen
-        global client
-        global pijuice
         config = load_config()
         config["topic_device_status"] = get_status_topic()
         config["topic_image_display"] = get_display_topic()
