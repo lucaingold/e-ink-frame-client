@@ -1,6 +1,6 @@
 paho-mqtt==1.6.1
 pillow==10.2.0
 RPi.GPIO==0.7.1
-atexit
+asyncio-atexit==1.0.1
 git+https://github.com/robweber/omni-epd.git#egg=omni-epd
 schedule==1.2.1
