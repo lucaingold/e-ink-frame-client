@@ -19,8 +19,9 @@ class StatusScheduler:
         if self.should_shutdown_on_battery and self.battery_manager.is_on_battery():
             self.battery_manager.prepare_shutdown()
             # But try to shut down nicely first
-            os.system("sudo shutdown -h 0")
-            sys.exit()
+            # os.system("sudo shutdown -h 0")
+            # sys.exit()
+            logging.info(f'Shutting down...')
         else:
             self.mqtt_client_manager.send_status_msg('online')
 
