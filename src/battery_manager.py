@@ -2,6 +2,7 @@ from pijuice import PiJuice
 
 STATUS_ROOT = "data"
 STATUS_POWER = "powerInput"
+STATUS_BATTERY = "battery"
 
 
 class BatteryManager:
@@ -9,16 +10,17 @@ class BatteryManager:
         self.config = config
         self.pijuice = PiJuice(1, 0x14)
 
-    def get_status(self):
+    def get_power_status(self):
         return self.pijuice.status.GetStatus()[STATUS_ROOT][STATUS_POWER]
+
+    def get_battery_status(self):
+        return self.pijuice.status.GetStatus()[STATUS_ROOT][STATUS_BATTERY]
 
     def get_charge_level(self):
         return self.pijuice.status.GetChargeLevel()[STATUS_ROOT]
 
     def is_on_battery(self):
-        print('Status:')
-        print(self.get_status())
-        return self.get_status() != 'PRESENT'
+        return self.get_battery_status() == 'NORMAL'
 
     def prepare_shutdown(self):
         # Remove power to PiJuice MCU IO pins

@@ -66,7 +66,7 @@ class MQTTClientManager:
 
     def get_status_payload(self, status):
         power_status, battery_percentage = self.get_charge_status()
-        wired = power_status == 'PRESENT'
+        wired = power_status != 'NORMAL'
         hostname = socket.gethostname()
         ip_address = self.get_ip()
         return json.dumps({
@@ -93,7 +93,7 @@ class MQTTClientManager:
 
     def get_charge_status(self):
         try:
-            power_status = self.battery_manager.get_status()
+            power_status = self.battery_manager.get_battery_status()
             charge_level = self.battery_manager.get_charge_level()
             logging.info(f'Status: {power_status}, Level: {charge_level}')
             return power_status, charge_level
