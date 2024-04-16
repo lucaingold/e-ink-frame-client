@@ -17,16 +17,16 @@ class StatusScheduler:
         on_battery = self.battery_manager.is_on_battery()
         logging.info(f'Device is {"on battery." if on_battery else "wired."} ')
         if self.should_shutdown_on_battery and self.battery_manager.is_on_battery():
-            # self.battery_manager.prepare_shutdown()
+            self.mqtt_client_manager.send_status_msg('offline')
+            self.battery_manager.prepare_shutdown()
             # But try to shut down nicely first
-            # os.system("sudo shutdown -h 0")
-            # sys.exit()
-            logging.info(f'Shutting down...')
+            os.system("sudo shutdown -h 0")
+            sys.exit()
         else:
             self.mqtt_client_manager.send_status_msg('online')
 
     def run_scheduler(self):
-        self.schedule.every(30).seconds.do(self.publish_status_and_handle_shutdown) #change back to 1 minute TODO
+        self.schedule.every(1).minutes.do(self.publish_status_and_handle_shutdown)
         while True:
             self.schedule.run_pending()
             time.sleep(1)
