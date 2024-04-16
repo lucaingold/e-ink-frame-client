@@ -16,6 +16,8 @@ class BatteryManager:
         return self.pijuice.status.GetChargeLevel()[STATUS_ROOT]
 
     def is_on_battery(self):
+        print('Status:')
+        print(self.get_status())
         return self.get_status() != 'PRESENT'
 
     def prepare_shutdown(self):
