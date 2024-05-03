@@ -1,6 +1,4 @@
 import json
-# from src.mock.e_ink_screen_mock import EInkScreen
-from src.e_ink_screen import EInkScreen
 # from src.mock.battery_manager_mock import BatteryManager
 from src.battery_manager import BatteryManager
 from src.mqtt_client_manager import MQTTClientManager
@@ -43,11 +41,8 @@ def main():
         config["topic_device_status"] = get_status_topic()
         config["topic_image_display"] = get_display_topic()
 
-        e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"], config["brightness_factor"], config["darkness_threshold"])
-        e_ink_screen.run()
-
         battery_manager = BatteryManager(config)
-        mqtt_client_manager = MQTTClientManager(config, e_ink_screen, battery_manager)
+        mqtt_client_manager = MQTTClientManager(config, battery_manager)
         status_manager = StatusScheduler(config, battery_manager, mqtt_client_manager)
         status_manager.start()
 

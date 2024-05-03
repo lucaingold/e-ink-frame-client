@@ -8,6 +8,8 @@ import io
 import threading
 from PIL import Image
 
+# from src.mock.e_ink_screen_mock import EInkScreen
+from src.e_ink_screen import EInkScreen
 from src.processed_message_tracker import ProcessedMessageTracker
 
 STATUS_ROOT = "data"
@@ -17,12 +19,13 @@ e_ink_screen_lock = threading.Lock()
 
 
 class MQTTClientManager:
-    def __init__(self, config, e_ink_screen, battery_manager):
+
+    def __init__(self, config, battery_manager):
+        self.e_ink_screen = self.init_eink_screen()
         self.retry = False
         self.client = mqtt.Client(client_id=str(uuid.uuid4()))
         self.config = config
         self.battery_manager = battery_manager
-        self.e_ink_screen = e_ink_screen
         if config["password"]:
             self.client.username_pw_set(config["username"], config["password"])
             self.client.tls_set()
@@ -33,6 +36,12 @@ class MQTTClientManager:
         self.client.will_set(config["topic_device_status"], payload=self.get_status_payload('offline'), qos=1,
                              retain=True)
         self.config = config
+
+    def init_eink_screen(self):
+        e_ink_screen = EInkScreen(self.config["screen_width"], self.config["screen_height"],
+                                       self.config["brightness_factor"], self.config["darkness_threshold"])
+        e_ink_screen.run()
+        return e_ink_screen
 
     def on_connect(self, client, userdata, flags, rc):
         logging.info("Connected with result code " + str(rc))
@@ -54,6 +63,7 @@ class MQTTClientManager:
                         time.sleep(5)
             except Exception as e:
                 logging.error("Error decoding and displaying the image on message:", str(e))
+                self.e_ink_screen = self.init_eink_screen()
                 if not self.retry:
                     logging.error("Retry", str(e))
                     time.sleep(3)
