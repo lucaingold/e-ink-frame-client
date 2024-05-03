@@ -26,7 +26,7 @@ class StatusScheduler:
             self.mqtt_client_manager.send_status_msg('online')
 
     def run_scheduler(self):
-        self.schedule.every(1).minutes.do(self.publish_status_and_handle_shutdown)
+        self.schedule.every(90).seconds.do(self.publish_status_and_handle_shutdown)
         while True:
             self.schedule.run_pending()
             time.sleep(1)

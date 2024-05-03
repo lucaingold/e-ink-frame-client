@@ -149,7 +149,7 @@ sudo systemctl disable polkit.service
 sudo systemctl disable raspi-config.service
 sudo systemctl disable apt-daily.service
 
-cmdline.txt add 'quiet' before root
+/boot/cmdline.txt add 'quiet' before root
 cmdline.txt add fsck.mode=skip
 
 sudo nano /etc/fstab
@@ -158,3 +158,16 @@ Comment out /boot-line (first line)
 For testing
 systemd-analyze
 systemd-analyze blame
+
+
+#### Service control
+
+- start service
+  sudo systemctl restart einkscreen 
+- stop
+  sudo systemctl stop einkscreen
+- enable
+  sudo systemctl enable einkscreen
+- logs
+  journalctl -u einkscreen.service -f
+  journalctl -u einkscreen.service

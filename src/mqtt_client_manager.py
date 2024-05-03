@@ -18,11 +18,12 @@ e_ink_screen_lock = threading.Lock()
 
 class MQTTClientManager:
     def __init__(self, config, e_ink_screen, battery_manager):
+        self.retry = False
         self.client = mqtt.Client(client_id=str(uuid.uuid4()))
         self.config = config
         self.battery_manager = battery_manager
         self.e_ink_screen = e_ink_screen
-        if (config["password"]):
+        if config["password"]:
             self.client.username_pw_set(config["username"], config["password"])
             self.client.tls_set()
 
@@ -49,9 +50,15 @@ class MQTTClientManager:
                     img = Image.open(io.BytesIO(image_data))
                     with e_ink_screen_lock:
                         self.e_ink_screen.display_image(img)
+                        self.retry = False
                         time.sleep(5)
             except Exception as e:
                 logging.error("Error decoding and displaying the image:", str(e))
+                if not self.retry:
+                    time.sleep(3)
+                    processed_message_tracker.cleanup_processed_messages()
+                    self.retry = True
+                    self.on_message(None, None, msg)
 
     def send_status_msg(self, mqtt_status):
         self.client.publish(self.config["topic_device_status"], payload=self.get_status_payload(mqtt_status), qos=1,
