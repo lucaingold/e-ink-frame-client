@@ -55,6 +55,7 @@ class EInkScreen:
     def display_image(self, image_data):
         try:
             with self.lock:
+                self.run()
                 # brightened_img = self.enhance_brightness(image_data)
                 self.display_image_on_epd(image_data)
                 time.sleep(5)

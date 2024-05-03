@@ -53,8 +53,9 @@ class MQTTClientManager:
                         self.retry = False
                         time.sleep(5)
             except Exception as e:
-                logging.error("Error decoding and displaying the image:", str(e))
+                logging.error("Error decoding and displaying the image on message:", str(e))
                 if not self.retry:
+                    logging.error("Retry", str(e))
                     time.sleep(3)
                     processed_message_tracker.cleanup_processed_messages()
                     self.retry = True
