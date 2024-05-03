@@ -94,7 +94,7 @@ class EInkScreen:
             return self.brightness_factor - 0.2
 
     def display_image_on_epd(self, display_image):
-        image_file_path = "/save/image.png"
+        image_file_path = "save/image.png"
         if os.path.exists(image_file_path):
             os.remove(image_file_path)
             logging.info("Existing file removed: %s", image_file_path)
