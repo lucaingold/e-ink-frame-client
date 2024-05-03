@@ -55,7 +55,6 @@ class EInkScreen:
     def display_image(self, image_data):
         try:
             with self.lock:
-                self.run()
                 # brightened_img = self.enhance_brightness(image_data)
                 self.display_image_on_epd(image_data)
                 time.sleep(5)
@@ -95,8 +94,12 @@ class EInkScreen:
 
     def display_image_on_epd(self, display_image):
         self.image_display = display_image.copy()
+        self.image_display = display_image.convert("1")
         logging.info("Prepare e-ink screen")
         self.epd.prepare()
+        logging.info("Clear e-ink screen")
+        self.epd.clear()
+        logging.info("Display image on e-ink screen")
         self.epd.display(self.image_display)
         logging.info("Send e-ink screen to sleep")
         self.epd.sleep()
