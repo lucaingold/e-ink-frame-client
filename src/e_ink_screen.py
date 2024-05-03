@@ -94,7 +94,6 @@ class EInkScreen:
 
     def display_image_on_epd(self, display_image):
         self.image_display = display_image.copy()
-        self.image_display = display_image.convert("1")
         logging.info("Prepare e-ink screen")
         self.epd.prepare()
         logging.info("Clear e-ink screen")
