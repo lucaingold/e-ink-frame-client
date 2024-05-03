@@ -1,12 +1,13 @@
 import io
 import logging
+import os
+
 from omni_epd import displayfactory, EPDNotFoundError
 import threading
 import time
 from PIL import Image, ImageEnhance
 
 DISPLAY_TYPE = "waveshare_epd.it8951"
-
 
 class EInkScreen:
     def __init__(self, screen_width=1600, screen_height=1200, brightness_factor=1.0, darkness_threshold=0.5):
@@ -93,6 +94,13 @@ class EInkScreen:
             return self.brightness_factor - 0.2
 
     def display_image_on_epd(self, display_image):
+        image_file_path = "/save/image.png"
+        if os.path.exists(image_file_path):
+            os.remove(image_file_path)
+            logging.info("Existing file removed: %s", image_file_path)
+        display_image.save(image_file_path)
+        logging.info("Image saved to disk: %s", image_file_path)
+
         self.image_display = display_image.copy()
         logging.info("Prepare e-ink screen")
         self.epd.prepare()

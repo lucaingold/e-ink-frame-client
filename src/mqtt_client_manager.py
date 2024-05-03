@@ -23,6 +23,7 @@ class MQTTClientManager:
     def __init__(self, config, battery_manager):
         self.config = config
         self.e_ink_screen = self.init_eink_screen()
+        time.sleep(0.5)
         self.retry = False
         self.client = mqtt.Client(client_id=str(uuid.uuid4()))
         self.battery_manager = battery_manager
