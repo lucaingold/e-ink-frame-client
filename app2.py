@@ -75,7 +75,6 @@ def show_image_on_screen(display_image):
         epd = displayfactory.load_display_driver(DISPLAY_TYPE, {})
         epd.width = width
         epd.height = height
-
         image_display = display_image.copy()
         logging.info("Prepare e-ink screen")
         epd.prepare()
@@ -83,14 +82,13 @@ def show_image_on_screen(display_image):
         epd.clear()
         logging.info("Display image on e-ink screen")
         epd.display(image_display)
+        logging.info("Send e-ink screen to sleep")
+        epd.sleep()
+        epd.close()
     except EPDNotFoundError:
         logging.error(f"Couldn't find {DISPLAY_TYPE}")
     except BaseException as e:
         logging.error(e)
-    finally:
-        logging.info("Send e-ink screen to sleep")
-        epd.sleep()
-        epd.close()
 
 
 def get_ip():
