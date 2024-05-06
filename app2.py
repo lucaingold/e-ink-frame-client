@@ -145,10 +145,7 @@ def main():
         global height
         global epd
         image_rotate = 0
-        epd = displayfactory.load_display_driver(DISPLAY_TYPE, {})
-        epd.width = width
-        epd.height = height
-        width, height = set_rotate(epd.width, epd.height, image_rotate)
+
 
         button_state = GPIO.input(button_pin)
         config = load_config()
@@ -156,7 +153,10 @@ def main():
         config["topic_image_display"] = get_display_topic()
         width = config["screen_width"]
         height = config["screen_height"]
-
+        epd = displayfactory.load_display_driver(DISPLAY_TYPE, {})
+        epd.width = width
+        epd.height = height
+        width, height = set_rotate(epd.width, epd.height, image_rotate)
 
         if button_state == GPIO.HIGH:
             turn_off_after_msg_consume = False
