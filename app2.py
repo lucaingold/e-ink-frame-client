@@ -20,7 +20,7 @@ try:
             print("Switch is OFF")
 
         # Add a small delay to prevent excessive CPU usage
-        time.sleep(0.1)
+        time.sleep(1)
 
 except KeyboardInterrupt:
     # Clean up GPIO on keyboard interrupt
