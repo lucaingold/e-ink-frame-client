@@ -72,9 +72,6 @@ def on_message(client, userdata, msg):
 
 def show_image_on_screen(display_image):
     try:
-        epd = displayfactory.load_display_driver(DISPLAY_TYPE, {})
-        epd.width = width
-        epd.height = height
         image_display = display_image.copy()
         logging.info("Prepare e-ink screen")
         epd.prepare()
@@ -146,6 +143,12 @@ def main():
         global turn_off_after_msg_consume
         global width
         global height
+        global epd
+        image_rotate = 0
+        epd = displayfactory.load_display_driver(DISPLAY_TYPE, {})
+        epd.width = width
+        epd.height = height
+        width, height = set_rotate(epd.width, epd.height, image_rotate)
 
         button_state = GPIO.input(button_pin)
         config = load_config()
