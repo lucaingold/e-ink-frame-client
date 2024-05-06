@@ -1,23 +1,22 @@
 import RPi.GPIO as GPIO
-import time
 
-# Set the GPIO mode and pin number
-GPIO.setmode(GPIO.BOARD)
-switch_pin = 33  # Example GPIO pin (you can change it)
+# Set up GPIO using BCM numbering
+GPIO.setmode(GPIO.BCM)
 
-# Setup the GPIO pin for input
-GPIO.setup(switch_pin, GPIO.IN)
+# Define the GPIO pin connected to the switch
+switch_pin = 16
 
-try:
-        # Read the state of the switch
-        switch_state = GPIO.input(switch_pin)
+# Set up the switch pin as input
+GPIO.setup(switch_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-        # Determine the state of the switch
-        if switch_state == GPIO.HIGH:
-            print("Switch is ON")
-        else:
-            print("Switch is OFF")
+# Read the initial state of the switch
+switch_state = GPIO.input(switch_pin)
 
-except KeyboardInterrupt:
-    # Clean up GPIO on keyboard interrupt
-    GPIO.cleanup()
+# Check if the switch is on or off
+if switch_state == GPIO.HIGH:
+    print("Switch is OFF")
+else:
+    print("Switch is ON")
+
+# Clean up GPIO
+GPIO.cleanup()
