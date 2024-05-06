@@ -75,6 +75,7 @@ def show_image_on_screen(display_image):
         epd = displayfactory.load_display_driver(DISPLAY_TYPE, {})
         epd.width = width
         epd.height = height
+
         image_display = display_image.copy()
         logging.info("Prepare e-ink screen")
         epd.prepare()
@@ -148,15 +149,13 @@ def main():
         global width
         global height
 
-        width = config["screen_width"]
-        height = config["screen_height"]
-
-        image_rotate = 0
-
         button_state = GPIO.input(button_pin)
         config = load_config()
         config["topic_device_status"] = get_status_topic()
         config["topic_image_display"] = get_display_topic()
+        width = config["screen_width"]
+        height = config["screen_height"]
+
 
         if button_state == GPIO.HIGH:
             turn_off_after_msg_consume = False
