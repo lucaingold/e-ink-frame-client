@@ -7,12 +7,12 @@ GPIO.setmode(GPIO.BCM)
 switch_pin = 16
 
 # Set up the switch pin as input
-GPIO.setup(switch_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
+GPIO.setup(switch_pin, GPIO.IN)
 
-# Read the initial state of the switch
+# Read the state of the switch
 switch_state = GPIO.input(switch_pin)
 
-# Check if the switch is on or off
+# Check the state of the switch
 if switch_state == GPIO.HIGH:
     print("Switch is OFF")
 else:
