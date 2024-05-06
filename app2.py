@@ -1,22 +1,26 @@
 import RPi.GPIO as GPIO
+import time
 
-# Set up GPIO using BCM numbering
+# Set GPIO mode
 GPIO.setmode(GPIO.BCM)
 
-# Define the GPIO pin connected to the switch
-switch_pin = 16
+# Set pin number
+button_pin = 16
 
-# Set up the switch pin as input
-GPIO.setup(switch_pin, GPIO.IN)
+# Set pin as input with pull-up resistor
+GPIO.setup(button_pin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-# Read the state of the switch
-switch_state = GPIO.input(switch_pin)
+try:
+    while True:
+        # Read the state of the button
+        button_state = GPIO.input(button_pin)
 
-# Check the state of the switch
-if switch_state == GPIO.HIGH:
-    print("Switch is OFF")
-else:
-    print("Switch is ON")
-
-# Clean up GPIO
-GPIO.cleanup()
+        # Print the state of the button
+        if button_state == GPIO.HIGH:
+            print("Button is pushed (on)")
+        else:
+            print("Button is not pushed (off)")
+        time.sleep(0.1)
+except KeyboardInterrupt:
+    # Clean up GPIO on exit
+    GPIO.cleanup()
