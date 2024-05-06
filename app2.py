@@ -9,7 +9,6 @@ switch_pin = 33  # Example GPIO pin (you can change it)
 GPIO.setup(switch_pin, GPIO.IN)
 
 try:
-    while True:
         # Read the state of the switch
         switch_state = GPIO.input(switch_pin)
 
@@ -18,10 +17,6 @@ try:
             print("Switch is ON")
         else:
             print("Switch is OFF")
-
-        # Add a small delay to prevent excessive CPU usage
-        time.sleep(0.2)
-
 
 except KeyboardInterrupt:
     # Clean up GPIO on keyboard interrupt
