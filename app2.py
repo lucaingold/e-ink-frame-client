@@ -3,7 +3,7 @@ import time
 
 # Set the GPIO mode and pin number
 GPIO.setmode(GPIO.BOARD)
-switch_pin = 33  # Example GPIO pin (you can change it)
+switch_pin = 13  # Example GPIO pin (you can change it)
 
 # Setup the GPIO pin for input
 GPIO.setup(switch_pin, GPIO.IN)
@@ -21,6 +21,7 @@ try:
 
         # Add a small delay to prevent excessive CPU usage
         time.sleep(0.2)
+
 
 except KeyboardInterrupt:
     # Clean up GPIO on keyboard interrupt
