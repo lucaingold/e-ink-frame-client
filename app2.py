@@ -17,10 +17,10 @@ try:
 
         # Print the state of the button
         if button_state == GPIO.HIGH:
-            print("Button is pushed (on)")
-        else:
             print("Button is not pushed (off)")
-        time.sleep(0.1)
+        else:
+            print("Button is pushed (on)")
+        time.sleep(1)
 except KeyboardInterrupt:
     # Clean up GPIO on exit
     GPIO.cleanup()
