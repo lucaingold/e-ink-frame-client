@@ -6,11 +6,14 @@ import RPi.GPIO as GPIO
 import paho.mqtt.client as mqtt
 import logging
 import json
+from omni_epd import displayfactory, EPDNotFoundError
 
 from PIL import Image
 
 from src.battery_manager import BatteryManager
 from src.e_ink_screen import EInkScreen
+
+DISPLAY_TYPE = "waveshare_epd.it8951"
 
 STATUS_ROOT = "data"
 STATUS_POWER = "powerInput"
@@ -55,7 +58,7 @@ def on_message(client, userdata, msg):
         try:
             image_data = msg.payload
             img = Image.open(io.BytesIO(image_data))
-            e_ink_screen.display_image(img)
+            show_image_on_screen(img)
             # retry = False
             time.sleep(5)
         except Exception as e:
@@ -65,6 +68,29 @@ def on_message(client, userdata, msg):
             #     time.sleep(3)
             #     retry = True
             #     on_message(None, None, msg)
+
+
+def show_image_on_screen(display_image):
+    try:
+        epd = displayfactory.load_display_driver(DISPLAY_TYPE, {})
+        epd.width = width
+        epd.height = height
+        image_display = display_image.copy()
+        logging.info("Prepare e-ink screen")
+        epd.prepare()
+        logging.info("Clear e-ink screen")
+        epd.clear()
+        logging.info("Display image on e-ink screen")
+        epd.display(image_display)
+    except EPDNotFoundError:
+        logging.error(f"Couldn't find {DISPLAY_TYPE}")
+    except BaseException as e:
+        logging.error(e)
+    finally:
+        logging.info("Send e-ink screen to sleep")
+        epd.sleep()
+        epd.close()
+
 
 def get_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -105,6 +131,13 @@ def get_status_payload( status):
         'timestamp': time.time()
     })
 
+def set_rotate(width, height, rotate=0):
+    if (rotate / 90) % 2 == 1:
+        temp = width
+        width = height
+        height = temp
+    return width, height
+
 
 def main():
     try:
@@ -112,6 +145,14 @@ def main():
         global e_ink_screen
         global battery_manager
         global turn_off_after_msg_consume
+        global width
+        global height
+
+        width = config["screen_width"]
+        height = config["screen_height"]
+
+        image_rotate = 0
+
         button_state = GPIO.input(button_pin)
         config = load_config()
         config["topic_device_status"] = get_status_topic()
@@ -124,9 +165,9 @@ def main():
 
         battery_manager = BatteryManager(config)
 
-        e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"],
-                                  config["brightness_factor"], config["darkness_threshold"])
-        e_ink_screen.run()
+        # e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"],
+        #                           config["brightness_factor"], config["darkness_threshold"])
+        # e_ink_screen.run()
 
         client = mqtt.Client(client_id=str(uuid.uuid4()))
         client.username_pw_set(config["username"], config["password"])
