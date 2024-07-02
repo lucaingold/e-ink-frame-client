@@ -94,7 +94,15 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     logging.info(f"Received from `{msg.topic}` topic")
     image_data = Image.open(io.BytesIO(msg.payload))
-    asyncio.run_coroutine_threadsafe(display_image_async(image_data), asyncio.get_event_loop())
+
+    loop = asyncio.new_event_loop()  # Create a new event loop
+    asyncio.set_event_loop(loop)     # Set it as the current event loop
+
+    try:
+        loop.run_until_complete(display_image_async(image_data))
+    finally:
+        loop.close()
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
