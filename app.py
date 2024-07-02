@@ -103,6 +103,7 @@ async def lifespan(app: FastAPI):
         mqtt_client.on_connect = on_connect
         mqtt_client.loop_start()
         mqtt_client.subscribe(image_topic)
+        logging.info("subscribed to image topic:" + image_topic)
         asyncio.create_task(start_background_tasks())
         yield
     except Exception as e:
