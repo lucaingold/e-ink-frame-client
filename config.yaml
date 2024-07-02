@@ -1,0 +1,19 @@
+mqtt:
+  broker: "1267e5cf620940ea957ccaedca8add6a.s2.eu.hivemq.cloud"
+  port: 8883
+  username: "einkframe"
+  password: "36WLktfFjTr2J0LxZ52ZFVuFJs"
+  topic: "test/topic"
+  device_id_placeholder: "{device_id}"
+  topic_image_display: "device/{device_id}/image/display"
+  topic_device_status: "device/{device_id}/status/online"
+device:
+#  id: "00:27:eb:1a:27:00"
+  id: "d8:3a:dd:97:5b:f4"
+  led_pin: 16
+  should_shutdown_on_battery: false
+screen:
+  height: 1200
+  width: 1600
+  brightness_factor: 1.0
+  darkness_threshold: 100
