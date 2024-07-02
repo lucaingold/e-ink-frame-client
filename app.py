@@ -14,6 +14,10 @@ from src.e_ink_screen import EInkScreen
 
 logging.basicConfig(level=logging.INFO)
 
+def replace_device_id_placeholder(topic: str):
+    return topic.replace(mqtt_config.device_id_placeholder, device_config.id)
+
+
 config_loader = ConfigLoader()
 app_config = config_loader.load()
 mqtt_config = app_config.mqtt
@@ -21,8 +25,9 @@ device_config = app_config.device
 screen_config = app_config.screen
 
 mqtt_client = mqtt.Client()
-status_topic = mqtt_config.topic_device_status
-image_topic = mqtt_config.topic_image_display
+status_topic = replace_device_id_placeholder(mqtt_config.topic_device_status)
+image_topic = replace_device_id_placeholder(mqtt_config.topic_image_display)
+
 
 eink_screen = EInkScreen()
 
@@ -88,7 +93,7 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     logging.info(f"Received from `{msg.topic}` topic")
     image_data = Image.open(io.BytesIO(msg.payload))
-    # asyncio.create_task(display_image_async(image_data))
+    asyncio.create_task(display_image_async(image_data))
 
 
 @asynccontextmanager
