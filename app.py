@@ -40,7 +40,7 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     logging.info(f"Received from `{msg.topic}` topic")
     image_data = Image.open(io.BytesIO(msg.payload))
-    asyncio.create_task(eink_screen.display_image(image_data))
+    asyncio.create_task(display_image_async(image_data))
 
 
 @asynccontextmanager
@@ -118,6 +118,9 @@ async def start_background_tasks():
     task = asyncio.create_task(publish_periodically(mqtt_client))
     return task
 
+
+async def display_image_async(image_data):
+    await eink_screen.display_image(image_data)
 
 @app.get("/config")
 async def root():
