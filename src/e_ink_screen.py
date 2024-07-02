@@ -18,7 +18,7 @@ class EInkScreen:
         self.image_display = None
         self.width = screen_width
         self.height = screen_height
-        self.lock = threading.Lock()
+        # self.lock = threading.Lock()
         self.brightness_factor = brightness_factor
         self.darkness_threshold = darkness_threshold
 
@@ -42,10 +42,10 @@ class EInkScreen:
 
     async def display_image(self, image_data):
         try:
-            with self.lock:
+            # with self.lock:
                 # display_image = self.enhance_brightness(image_data) #TODO
-                self.display_image_on_epd(image_data)
-                time.sleep(5)
+            self.display_image_on_epd(image_data)
+            time.sleep(5)
         except Exception as e:
             logging.error("Error decoding and displaying the image:", str(e))
 
