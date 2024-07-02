@@ -83,6 +83,7 @@ async def display_image_async(image_data):
     await eink_screen.display_image(image_data)
 
 
+
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
         logging.info("Connected to MQTT Broker!")
@@ -93,8 +94,7 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     logging.info(f"Received from `{msg.topic}` topic")
     image_data = Image.open(io.BytesIO(msg.payload))
-    asyncio.create_task(display_image_async(image_data))
-
+    asyncio.run_coroutine_threadsafe(display_image_async(image_data), asyncio.get_event_loop())
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
