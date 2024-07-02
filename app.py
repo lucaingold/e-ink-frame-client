@@ -26,16 +26,20 @@ image_topic = mqtt_config.topic_image_display
 
 eink_screen = EInkScreen()
 
+
 async def initialize_eink():
     await eink_screen.run()
 
+
 def get_mqtt_client():
     return mqtt_client
+
 
 async def publish_periodically(client: mqtt.Client):
     while True:
         await asyncio.sleep(60)
         client.publish(status_topic, get_status_payload("online"))
+
 
 def get_status_payload(status):
     hostname = socket.gethostname()
@@ -50,6 +54,7 @@ def get_status_payload(status):
         'timestamp': time.time()
     })
 
+
 def get_ip():
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.settimeout(0)
@@ -62,12 +67,16 @@ def get_ip():
         s.close()
     return ip
 
+
 async def start_background_tasks():
     task = asyncio.create_task(publish_periodically(mqtt_client))
     return task
 
+
 async def display_image_async(image_data):
+    logging.info("display_image_async")
     await eink_screen.display_image(image_data)
+
 
 def on_connect(client, userdata, flags, rc):
     if rc == 0:
@@ -75,10 +84,12 @@ def on_connect(client, userdata, flags, rc):
     else:
         logging.error(f"Failed to connect, return code {rc}")
 
+
 def on_message(client, userdata, msg):
     logging.info(f"Received from `{msg.topic}` topic")
     image_data = Image.open(io.BytesIO(msg.payload))
-    asyncio.create_task(display_image_async(image_data))
+    # asyncio.create_task(display_image_async(image_data))
+
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -102,7 +113,9 @@ async def lifespan(app: FastAPI):
         mqtt_client.loop_stop()
         mqtt_client.disconnect()
 
+
 app = FastAPI(lifespan=lifespan)
+
 
 @app.get("/config")
 async def root():
@@ -110,14 +123,6 @@ async def root():
     app_config_without_password.mqtt.password = "********"
     return app_config_without_password
 
-@app.post("/publish")
-async def publish_message(message: str, client: mqtt.Client = Depends(get_mqtt_client)):
-    try:
-        client.publish(mqtt_config.topic_device_status, message)
-        return {"message": f"Message `{message}` published to topic `{mqtt_config.topic_device_status}`"}
-    except Exception as e:
-        logging.error(f"Error publishing message: {e}")
-        raise HTTPException(status_code=500, detail="Failed to publish message")
 
 if __name__ == "__main__":
     uvicorn.run(app, host="0.0.0.0", port=8000)
