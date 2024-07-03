@@ -10,12 +10,28 @@ from fastapi import FastAPI, Depends, HTTPException
 import uvicorn
 import paho.mqtt.client as mqtt
 from src.config_loader import ConfigLoader
-from src.e_ink_screen import EInkScreen
+import io
+import logging
+import os
+import time
+from PIL import Image, ImageEnhance
+from omni_epd import displayfactory, EPDNotFoundError
+
+DISPLAY_TYPE = "waveshare_epd.it8951"
 
 logging.basicConfig(level=logging.INFO)
 
+
 def replace_device_id_placeholder(topic: str):
     return topic.replace(mqtt_config.device_id_placeholder, device_config.id)
+
+
+def set_rotate(width, height, rotate=0):
+    if (rotate / 90) % 2 == 1:
+        temp = width
+        width = height
+        height = temp
+    return width, height
 
 
 config_loader = ConfigLoader()
@@ -27,13 +43,12 @@ screen_config = app_config.screen
 mqtt_client = mqtt.Client()
 status_topic = replace_device_id_placeholder(mqtt_config.topic_device_status)
 image_topic = replace_device_id_placeholder(mqtt_config.topic_image_display)
-
-
-eink_screen = EInkScreen()
-
-
-async def initialize_eink():
-    await eink_screen.run()
+config_dict = {}
+epd = displayfactory.load_display_driver(DISPLAY_TYPE, config_dict)
+epd.width = screen_config.width
+epd.height = screen_config.height
+image_rotate = 0
+width, height = set_rotate(epd.width, epd.height, image_rotate)
 
 
 def get_mqtt_client():
@@ -78,10 +93,28 @@ async def start_background_tasks():
     return task
 
 
-async def display_image_async(image_data):
-    logging.info("display_image_async")
-    await eink_screen.display_image(image_data)
+def display_image_on_epd(display_image):
+    logging.info("display_image_on_epd")
+    try:
+        # image_file_path = "save/image.jpeg"
+        # if os.path.exists(image_file_path):
+        #     os.remove(image_file_path)
+        #     logging.info("Existing file removed: %s", image_file_path)
+        # display_image.save(image_file_path)
+        # logging.info("Image saved to disk: %s", image_file_path)
 
+        # image_display = self.enhance_brightness(display_image)
+
+        logging.info("Prepare e-ink screen")
+        epd.prepare()
+        logging.info("Clear e-ink screen")
+        epd.clear()
+        logging.info("Display image on e-ink screen")
+        epd.display(display_image)
+        logging.info("Send e-ink screen to sleep")
+        epd.sleep()
+    except Exception as e:
+        logging.error(f"Error displaying image on e-ink screen: {e}")
 
 
 def on_connect(client, userdata, flags, rc):
@@ -94,21 +127,17 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     logging.info(f"Received from `{msg.topic}` topic")
     image_data = Image.open(io.BytesIO(msg.payload))
-
-    loop = asyncio.new_event_loop()  # Create a new event loop
-    asyncio.set_event_loop(loop)     # Set it as the current event loop
-
     try:
-        loop.run_until_complete(display_image_async(image_data))
-    finally:
-        loop.close()
+        display_image_on_epd(image_data)
+        time.sleep(5)
+    except Exception as e:
+        logging.error(f"Error decoding and displaying the image: {e}")
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     logging.info("lifespan start - startup")
     try:
-        await initialize_eink()
         mqtt_client.username_pw_set(mqtt_config.username, mqtt_config.password)
         mqtt_client.tls_set()
         mqtt_client.connect(mqtt_config.broker, mqtt_config.port, 60)
