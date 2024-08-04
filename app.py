@@ -122,7 +122,7 @@ def display_image_on_epd(display_image):
         display.clear()
         logging.info("Display image on e-ink screen")
         display.frame_buf.paste(0xFF, box=(0, 0, display.width, display.height))
-        Image.open(display_image)
+        # Image.open(display_image)
         dims = (display.width, display.height)
         display_image.thumbnail(dims)
         paste_coords = [dims[i] - display_image.size[i] for i in (0,1)]  # align image with bottom of display
