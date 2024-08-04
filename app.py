@@ -47,8 +47,8 @@ image_topic = replace_device_id_placeholder(mqtt_config.topic_image_display)
 config_dict = {}
 
 print('Initializing EPD...')
-display = AutoEPDDisplay(vcom=-2.27, width=screen_config.width, height=screen_config.height, rotate=None, mirror=False, spi_hz=24000000)
-print('VCOM set to', display.epd.get_vcom())
+display = AutoEPDDisplay(vcom=-2.27, rotate=None, mirror=False, spi_hz=24000000)
+# print('VCOM set to', display.epd.get_vcom())
 epd = display.epd
 
 print('System info:')

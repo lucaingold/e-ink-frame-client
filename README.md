@@ -72,7 +72,7 @@ pip3 install -r requirements.txt
 #### Install OMNI EPD Library 
 ```
 pip3 install git+https://github.com/robweber/omni-epd.git#egg=waveshare_epd.it8951
-pip3 install git+https://github.com/robweber/omni-epd.git#egg=omni-epd
+pip3 install git+https://github.com/robweber/omni-epd.git#egg=omni_epd
 ```
 
 ##### Alternative
