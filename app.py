@@ -15,7 +15,8 @@ import logging
 import os
 import time
 from PIL import Image, ImageEnhance
-from omni_epd import displayfactory, EPDNotFoundError
+from IT8951.display import AutoEPDDisplay
+from IT8951 import constants
 
 DISPLAY_TYPE = "waveshare_epd.it8951"
 
@@ -44,11 +45,22 @@ mqtt_client = mqtt.Client()
 status_topic = replace_device_id_placeholder(mqtt_config.topic_device_status)
 image_topic = replace_device_id_placeholder(mqtt_config.topic_image_display)
 config_dict = {}
-epd = displayfactory.load_display_driver(DISPLAY_TYPE, config_dict)
-epd.width = screen_config.width
-epd.height = screen_config.height
+
+print('Initializing EPD...')
+display = AutoEPDDisplay(vcom=-2.27, rotate=None, mirror=None, spi_hz=24000000)
+print('VCOM set to', display.epd.get_vcom())
+epd = display.epd
+
+print('System info:')
+print('  display size: {}x{}'.format(epd.width, epd.height))
+print('  img buffer address: {:X}'.format(epd.img_buf_address))
+print('  firmware version: {}'.format(epd.firmware_version))
+print('  LUT version: {}'.format(epd.lut_version))
+print()
+# epd.width = screen_config.width
+# epd.height = screen_config.height
 image_rotate = 0
-width, height = set_rotate(epd.width, epd.height, image_rotate)
+# width, height = set_rotate(epd.width, epd.height, image_rotate)
 
 
 def get_mqtt_client():
@@ -106,13 +118,19 @@ def display_image_on_epd(display_image):
         # image_display = self.enhance_brightness(display_image)
 
         logging.info("Prepare e-ink screen")
-        epd.prepare()
         logging.info("Clear e-ink screen")
-        epd.clear()
+        display.clear()
         logging.info("Display image on e-ink screen")
-        epd.display(display_image)
+        display.frame_buf.paste(0xFF, box=(0, 0, display.width, display.height))
+        Image.open(display_image)
+        dims = (display.width, display.height)
+        display_image.thumbnail(dims)
+        paste_coords = [dims[i] - display_image.size[i] for i in (0,1)]  # align image with bottom of display
+        display.frame_buf.paste(display_image, paste_coords)
+        display.draw_full(constants.DisplayModes.GC16)
         logging.info("Send e-ink screen to sleep")
-        epd.sleep()
+        # epd.sleep()
+        display.epd.sleep()
     except Exception as e:
         logging.error(f"Error displaying image on e-ink screen: {e}")
 
