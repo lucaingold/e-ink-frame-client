@@ -130,7 +130,7 @@ def display_image_on_epd(display_image):
         display.draw_full(constants.DisplayModes.GC16)
         logging.info("Send e-ink screen to sleep")
         # epd.sleep()
-        display.epd.sleep()
+        # display.epd.sleep()
     except Exception as e:
         logging.error(f"Error displaying image on e-ink screen: {e}")
 
