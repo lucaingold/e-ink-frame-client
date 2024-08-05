@@ -95,7 +95,8 @@ async def start_background_tasks():
     return task
 
 
-def display_image_on_epd(display_image):
+async def display_image_on_epd(display_image):
+    global display
     logging.info("display_image_on_epd")
     partial_update(display)
 # try:
@@ -177,7 +178,8 @@ def on_message(client, userdata, msg):
     logging.info(f"Received from `{msg.topic}` topic")
     image_data = Image.open(io.BytesIO(msg.payload))
     try:
-        display_image_on_epd(image_data)
+        # display_image_on_epd(image_data)
+        asyncio.create_task(display_image_on_epd(image_data))
         time.sleep(5)
     except Exception as e:
         logging.error(f"Error decoding and displaying the image: {e}")
@@ -235,7 +237,6 @@ def get_display():
 async def some_endpoint():
     # Use `display` here
     # display_image_on_epd(display)
-    display = AutoEPDDisplay(vcom=-2.27, rotate=None, mirror=False, spi_hz=24000000)
     await asyncio.to_thread(partial_update, display)
     return {"status": "ok"}
 
