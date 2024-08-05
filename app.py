@@ -189,7 +189,7 @@ async def lifespan(app: FastAPI):
     logging.info("lifespan start - startup")
     try:
         print('Initializing EPD...')
-        display = AutoEPDDisplay(vcom=-2.27, rotate=None, mirror=False, spi_hz=24000000)
+        display = AutoEPDDisplay(vcom=-2.15, rotate=None, mirror=False, spi_hz=24000000)
         # print('VCOM set to', display.epd.get_vcom())
         epd = display.epd
 
