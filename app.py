@@ -46,20 +46,7 @@ status_topic = replace_device_id_placeholder(mqtt_config.topic_device_status)
 image_topic = replace_device_id_placeholder(mqtt_config.topic_image_display)
 config_dict = {}
 
-global display, epd
-print('Initializing EPD...')
-display = AutoEPDDisplay(vcom=-2.27, rotate=None, mirror=False, spi_hz=24000000)
-# print('VCOM set to', display.epd.get_vcom())
-epd = display.epd
 
-print('System info:')
-print('  display size: {}x{}'.format(epd.width, epd.height))
-print('  img buffer address: {:X}'.format(epd.img_buf_address))
-print('  firmware version: {}'.format(epd.firmware_version))
-print('  LUT version: {}'.format(epd.lut_version))
-print()
-# epd.width = screen_config.width
-# epd.height = screen_config.height
 image_rotate = 0
 
 
@@ -197,8 +184,24 @@ def on_message(client, userdata, msg):
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
+    global display, epd
     logging.info("lifespan start - startup")
     try:
+        print('Initializing EPD...')
+        display = AutoEPDDisplay(vcom=-2.27, rotate=None, mirror=False, spi_hz=24000000)
+        # print('VCOM set to', display.epd.get_vcom())
+        epd = display.epd
+
+        print('System info:')
+        print('  display size: {}x{}'.format(epd.width, epd.height))
+        print('  img buffer address: {:X}'.format(epd.img_buf_address))
+        print('  firmware version: {}'.format(epd.firmware_version))
+        print('  LUT version: {}'.format(epd.lut_version))
+        print()
+        # epd.width = screen_config.width
+        # epd.height = screen_config.height
+
+
         mqtt_client.username_pw_set(mqtt_config.username, mqtt_config.password)
         mqtt_client.tls_set()
         mqtt_client.connect(mqtt_config.broker, mqtt_config.port, 60)
