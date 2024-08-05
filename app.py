@@ -224,6 +224,20 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan)
 
 
+def get_display():
+    if display is None:
+        raise HTTPException(status_code=500, detail="Display not initialized")
+    return display
+
+
+@app.get("/some-endpoint")
+async def some_endpoint(display: AutoEPDDisplay = Depends(get_display)):
+    # Use `display` here
+    display_image_on_epd(display)
+    return {"status": "ok"}
+
+
+
 @app.get("/config")
 async def root():
     app_config_without_password = app_config.copy()
