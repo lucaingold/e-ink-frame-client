@@ -189,16 +189,16 @@ async def lifespan(app: FastAPI):
     logging.info("lifespan start - startup")
     try:
         print('Initializing EPD...')
-        display = AutoEPDDisplay(vcom=-2.27, rotate=None, mirror=False, spi_hz=24000000)
+        # display = AutoEPDDisplay(vcom=-2.27, rotate=None, mirror=False, spi_hz=24000000)
         # print('VCOM set to', display.epd.get_vcom())
-        epd = display.epd
+        # epd = display.epd
 
-        print('System info:')
-        print('  display size: {}x{}'.format(epd.width, epd.height))
-        print('  img buffer address: {:X}'.format(epd.img_buf_address))
-        print('  firmware version: {}'.format(epd.firmware_version))
-        print('  LUT version: {}'.format(epd.lut_version))
-        print()
+        # print('System info:')
+        # print('  display size: {}x{}'.format(epd.width, epd.height))
+        # print('  img buffer address: {:X}'.format(epd.img_buf_address))
+        # print('  firmware version: {}'.format(epd.firmware_version))
+        # print('  LUT version: {}'.format(epd.lut_version))
+        # print()
         # epd.width = screen_config.width
         # epd.height = screen_config.height
 
@@ -232,9 +232,10 @@ def get_display():
 
 
 @app.get("/some-endpoint")
-async def some_endpoint(display: AutoEPDDisplay = Depends(get_display)):
+async def some_endpoint():
     # Use `display` here
     # display_image_on_epd(display)
+    display = AutoEPDDisplay(vcom=-2.27, rotate=None, mirror=False, spi_hz=24000000)
     await asyncio.to_thread(partial_update, display)
     return {"status": "ok"}
 
