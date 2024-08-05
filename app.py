@@ -177,9 +177,11 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     logging.info(f"Received from `{msg.topic}` topic")
     image_data = Image.open(io.BytesIO(msg.payload))
+    loop = asyncio.get_event_loop()
     try:
         # display_image_on_epd(image_data)
-        asyncio.create_task(display_image_on_epd(image_data))
+        asyncio.run_coroutine_threadsafe(display_image_on_epd(image_data), loop)
+        # asyncio.create_task(display_image_on_epd(image_data))
         time.sleep(5)
     except Exception as e:
         logging.error(f"Error decoding and displaying the image: {e}")
