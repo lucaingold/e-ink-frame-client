@@ -95,36 +95,34 @@ async def start_background_tasks():
     return task
 
 
-async def display_image_on_epd(display_image):
-    global display
+def display_image_on_epd(display_image):
     logging.info("display_image_on_epd")
-    partial_update(display)
-# try:
-#         # image_file_path = "save/image.jpeg"
-#         # if os.path.exists(image_file_path):
-#         #     os.remove(image_file_path)
-#         #     logging.info("Existing file removed: %s", image_file_path)
-#         # display_image.save(image_file_path)
-#         # logging.info("Image saved to disk: %s", image_file_path)
-#
-#         # image_display = self.enhance_brightness(display_image)
-#         partial_update(display)
-#         # logging.info("Prepare e-ink screen")
-#         # logging.info("Clear e-ink screen")
-#         # display.clear()
-#         # logging.info("Display image on e-ink screen")
-#         # display.frame_buf.paste(0xFF, box=(0, 0, display.width, display.height))
-#         # # Image.open(display_image)
-#         # dims = (display.width, display.height)
-#         # display_image.thumbnail(dims)
-#         # paste_coords = [dims[i] - display_image.size[i] for i in (0, 1)]  # align image with bottom of display
-#         # display.frame_buf.paste(display_image, paste_coords)
-#         # display.draw_full(constants.DisplayModes.GC16)
-#         # logging.info("Send e-ink screen to sleep")
-#         # epd.sleep()
-#         # display.epd.sleep()
-#     except Exception as e:
-#         logging.error(f"Error displaying image on e-ink screen: {e}")
+    try:
+        # image_file_path = "save/image.jpeg"
+        # if os.path.exists(image_file_path):
+        #     os.remove(image_file_path)
+        #     logging.info("Existing file removed: %s", image_file_path)
+        # display_image.save(image_file_path)
+        # logging.info("Image saved to disk: %s", image_file_path)
+
+        # image_display = self.enhance_brightness(display_image)
+        partial_update(display)
+        # logging.info("Prepare e-ink screen")
+        # logging.info("Clear e-ink screen")
+        # display.clear()
+        # logging.info("Display image on e-ink screen")
+        # display.frame_buf.paste(0xFF, box=(0, 0, display.width, display.height))
+        # # Image.open(display_image)
+        # dims = (display.width, display.height)
+        # display_image.thumbnail(dims)
+        # paste_coords = [dims[i] - display_image.size[i] for i in (0, 1)]  # align image with bottom of display
+        # display.frame_buf.paste(display_image, paste_coords)
+        # display.draw_full(constants.DisplayModes.GC16)
+        # logging.info("Send e-ink screen to sleep")
+        # epd.sleep()
+        # display.epd.sleep()
+    except Exception as e:
+        logging.error(f"Error displaying image on e-ink screen: {e}")
 
 
 
@@ -177,18 +175,9 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     logging.info(f"Received from `{msg.topic}` topic")
     image_data = Image.open(io.BytesIO(msg.payload))
-    loop = asyncio.get_event_loop()
     try:
-        if loop.is_running():
-            # display_image_on_epd(image_data)
-            asyncio.run_coroutine_threadsafe(display_image_on_epd(image_data), loop)
-            # asyncio.create_task(display_image_on_epd(image_data))
-            time.sleep(5)
-        else:
-            # Create a new event loop and run the coroutine
-            new_loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(new_loop)
-            new_loop.run_until_complete(display_image_on_epd(image_data))
+        display_image_on_epd(image_data)
+        time.sleep(5)
     except Exception as e:
         logging.error(f"Error decoding and displaying the image: {e}")
 
@@ -199,16 +188,16 @@ async def lifespan(app: FastAPI):
     logging.info("lifespan start - startup")
     try:
         print('Initializing EPD...')
-        # display = AutoEPDDisplay(vcom=-2.27, rotate=None, mirror=False, spi_hz=24000000)
+        display = AutoEPDDisplay(vcom=-2.27, rotate=None, mirror=False, spi_hz=24000000)
         # print('VCOM set to', display.epd.get_vcom())
-        # epd = display.epd
+        epd = display.epd
 
-        # print('System info:')
-        # print('  display size: {}x{}'.format(epd.width, epd.height))
-        # print('  img buffer address: {:X}'.format(epd.img_buf_address))
-        # print('  firmware version: {}'.format(epd.firmware_version))
-        # print('  LUT version: {}'.format(epd.lut_version))
-        # print()
+        print('System info:')
+        print('  display size: {}x{}'.format(epd.width, epd.height))
+        print('  img buffer address: {:X}'.format(epd.img_buf_address))
+        print('  firmware version: {}'.format(epd.firmware_version))
+        print('  LUT version: {}'.format(epd.lut_version))
+        print()
         # epd.width = screen_config.width
         # epd.height = screen_config.height
 
@@ -240,14 +229,10 @@ def get_display():
         raise HTTPException(status_code=500, detail="Display not initialized")
     return display
 
-
 @app.get("/some-endpoint")
 async def some_endpoint():
     # Use `display` here
-    # display_image_on_epd(display)
-    await asyncio.to_thread(partial_update, display)
     return {"status": "ok"}
-
 
 
 @app.get("/config")
