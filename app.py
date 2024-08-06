@@ -20,6 +20,7 @@ from IT8951 import constants
 
 logging.basicConfig(level=logging.INFO)
 
+
 def replace_device_id_placeholder(topic: str):
     return topic.replace(mqtt_config.device_id_placeholder, device_config.id)
 
@@ -47,6 +48,7 @@ image_rotate = 0
 
 display = AutoEPDDisplay(vcom=-2.27, spi_hz=24000000)
 epd = display.epd
+display.epd.wait_display_ready()
 
 # width, height = set_rotate(epd.width, epd.height, image_rotate)
 
