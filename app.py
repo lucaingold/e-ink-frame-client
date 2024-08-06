@@ -97,7 +97,7 @@ async def start_background_tasks():
 
 def display_image_on_epd(display_image):
     logging.info("display_image_on_epd")
-    try:
+    # try:
         # image_file_path = "save/image.jpeg"
         # if os.path.exists(image_file_path):
         #     os.remove(image_file_path)
@@ -106,7 +106,7 @@ def display_image_on_epd(display_image):
         # logging.info("Image saved to disk: %s", image_file_path)
 
         # image_display = self.enhance_brightness(display_image)
-        partial_update(display)
+    partial_update(display)
         # logging.info("Prepare e-ink screen")
         # logging.info("Clear e-ink screen")
         # display.clear()
@@ -121,8 +121,8 @@ def display_image_on_epd(display_image):
         # logging.info("Send e-ink screen to sleep")
         # epd.sleep()
         # display.epd.sleep()
-    except Exception as e:
-        logging.error(f"Error displaying image on e-ink screen: {e}")
+    # except Exception as e:
+    #     logging.error(f"Error displaying image on e-ink screen: {e}")
 
 
 
@@ -175,11 +175,11 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
     logging.info(f"Received from `{msg.topic}` topic")
     image_data = Image.open(io.BytesIO(msg.payload))
-    try:
-        display_image_on_epd(image_data)
-        time.sleep(5)
-    except Exception as e:
-        logging.error(f"Error decoding and displaying the image: {e}")
+    # try:
+    display_image_on_epd(image_data)
+        # time.sleep(5)
+    # except Exception as e:
+    #     logging.error(f"Error decoding and displaying the image: {e}")
 
 
 @asynccontextmanager
