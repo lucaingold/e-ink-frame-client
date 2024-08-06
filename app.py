@@ -97,6 +97,9 @@ async def start_background_tasks():
 
 def display_image_on_epd(display_image):
     logging.info("display_image_on_epd")
+
+    display.clear()
+    display.epd.wait_display_ready()
     # try:
         # image_file_path = "save/image.jpeg"
         # if os.path.exists(image_file_path):
@@ -188,7 +191,7 @@ async def lifespan(app: FastAPI):
     logging.info("lifespan start - startup")
     try:
         print('Initializing EPD...')
-        display = AutoEPDDisplay(vcom=-2.27, rotate=None, mirror=False, spi_hz=24000000)
+        display = AutoEPDDisplay(vcom=-2.27, spi_hz=24000000)
         # print('VCOM set to', display.epd.get_vcom())
         epd = display.epd
 
@@ -232,6 +235,10 @@ def get_display():
 @app.get("/some-endpoint")
 async def some_endpoint():
     # Use `display` here
+    display.clear()
+    display.epd.wait_display_ready()
+    partial_update(display)
+    display.epd.sleep()
     return {"status": "ok"}
 
 
