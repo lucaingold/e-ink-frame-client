@@ -18,10 +18,7 @@ from PIL import Image, ImageEnhance
 from IT8951.display import AutoEPDDisplay
 from IT8951 import constants
 
-DISPLAY_TYPE = "waveshare_epd.it8951"
-
 logging.basicConfig(level=logging.INFO)
-
 
 def replace_device_id_placeholder(topic: str):
     return topic.replace(mqtt_config.device_id_placeholder, device_config.id)
@@ -46,9 +43,10 @@ status_topic = replace_device_id_placeholder(mqtt_config.topic_device_status)
 image_topic = replace_device_id_placeholder(mqtt_config.topic_image_display)
 config_dict = {}
 
-
 image_rotate = 0
 
+display = AutoEPDDisplay(vcom=-2.27, spi_hz=24000000)
+epd = display.epd
 
 # width, height = set_rotate(epd.width, epd.height, image_rotate)
 
@@ -97,6 +95,7 @@ async def start_background_tasks():
 
 def display_image_on_epd(display_image):
     logging.info("display_image_on_epd")
+
 
     display.epd.wait_display_ready()
     # try:
@@ -192,9 +191,8 @@ async def lifespan(app: FastAPI):
     logging.info("lifespan start - startup")
     try:
         print('Initializing EPD...')
-        display = AutoEPDDisplay(vcom=-2.27, spi_hz=24000000)
+        print('VCOM set to', display.epd.get_vcom())
         # print('VCOM set to', display.epd.get_vcom())
-        epd = display.epd
 
         print('System info:')
         print('  display size: {}x{}'.format(epd.width, epd.height))
@@ -227,11 +225,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-
-def get_display():
-    if display is None:
-        raise HTTPException(status_code=500, detail="Display not initialized")
-    return display
 
 @app.get("/some-endpoint")
 async def some_endpoint():
