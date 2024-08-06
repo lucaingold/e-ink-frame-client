@@ -101,7 +101,7 @@ def display_image_on_epd(display_image):
     display.clear()
     display.epd.wait_display_ready()
     # try:
-        # image_file_path = "save/image.jpeg"
+    #     image_file_path = "save/image.jpeg"
         # if os.path.exists(image_file_path):
         #     os.remove(image_file_path)
         #     logging.info("Existing file removed: %s", image_file_path)
@@ -109,19 +109,21 @@ def display_image_on_epd(display_image):
         # logging.info("Image saved to disk: %s", image_file_path)
 
         # image_display = self.enhance_brightness(display_image)
-    partial_update(display)
-        # logging.info("Prepare e-ink screen")
-        # logging.info("Clear e-ink screen")
-        # display.clear()
-        # logging.info("Display image on e-ink screen")
-        # display.frame_buf.paste(0xFF, box=(0, 0, display.width, display.height))
-        # # Image.open(display_image)
-        # dims = (display.width, display.height)
-        # display_image.thumbnail(dims)
-        # paste_coords = [dims[i] - display_image.size[i] for i in (0, 1)]  # align image with bottom of display
-        # display.frame_buf.paste(display_image, paste_coords)
-        # display.draw_full(constants.DisplayModes.GC16)
-        # logging.info("Send e-ink screen to sleep")
+    # partial_update(display)
+    logging.info("Prepare e-ink screen")
+    logging.info("Clear e-ink screen")
+    display.clear()
+    logging.info("Wait display ready")
+    display.epd.wait_display_ready()
+    logging.info("Display image on e-ink screen")
+    display.frame_buf.paste(0xFF, box=(0, 0, display.width, display.height))
+        # Image.open(display_image)
+    dims = (display.width, display.height)
+    display_image.thumbnail(dims)
+    paste_coords = [dims[i] - display_image.size[i] for i in (0, 1)]  # align image with bottom of display
+    display.frame_buf.paste(display_image, paste_coords)
+    display.draw_full(constants.DisplayModes.GC16)
+    # logging.info("Send e-ink screen to sleep")
         # epd.sleep()
         # display.epd.sleep()
     # except Exception as e:
@@ -237,8 +239,9 @@ async def some_endpoint():
     # Use `display` here
     display.clear()
     display.epd.wait_display_ready()
+    display.epd.spi.wait_ready()
     partial_update(display)
-    display.epd.sleep()
+    # display.epd.sleep()
     return {"status": "ok"}
 
 
