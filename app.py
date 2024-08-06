@@ -48,6 +48,7 @@ image_rotate = 0
 
 display = AutoEPDDisplay(vcom=-2.27, spi_hz=24000000)
 epd = display.epd
+display.clear()
 display.epd.wait_display_ready()
 
 # width, height = set_rotate(epd.width, epd.height, image_rotate)
