@@ -98,7 +98,6 @@ async def start_background_tasks():
 def display_image_on_epd(display_image):
     logging.info("display_image_on_epd")
 
-    display.clear()
     display.epd.wait_display_ready()
     # try:
     #     image_file_path = "save/image.jpeg"
