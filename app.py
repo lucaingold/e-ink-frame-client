@@ -1,22 +1,20 @@
-import io
-import logging
 import socket
 import json
-import time
-from PIL import Image, ImageFont, ImageDraw
+from PIL import ImageFont, ImageDraw
 from contextlib import asynccontextmanager
 import asyncio
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI
 import uvicorn
 import paho.mqtt.client as mqtt
+
+from IT8951 import constants
 from src.config_loader import ConfigLoader
 import io
 import logging
-import os
 import time
-from PIL import Image, ImageEnhance
+from PIL import Image
+
 from IT8951.display import AutoEPDDisplay
-from IT8951 import constants
 
 logging.basicConfig(level=logging.INFO)
 
@@ -50,6 +48,7 @@ display = AutoEPDDisplay(vcom=-2.27, spi_hz=24000000)
 epd = display.epd
 display.clear()
 display.epd.wait_display_ready()
+
 
 # width, height = set_rotate(epd.width, epd.height, image_rotate)
 
@@ -99,17 +98,16 @@ async def start_background_tasks():
 def display_image_on_epd(display_image):
     logging.info("display_image_on_epd")
 
-
     display.epd.wait_display_ready()
     # try:
     #     image_file_path = "save/image.jpeg"
-        # if os.path.exists(image_file_path):
-        #     os.remove(image_file_path)
-        #     logging.info("Existing file removed: %s", image_file_path)
-        # display_image.save(image_file_path)
-        # logging.info("Image saved to disk: %s", image_file_path)
+    # if os.path.exists(image_file_path):
+    #     os.remove(image_file_path)
+    #     logging.info("Existing file removed: %s", image_file_path)
+    # display_image.save(image_file_path)
+    # logging.info("Image saved to disk: %s", image_file_path)
 
-        # image_display = self.enhance_brightness(display_image)
+    # image_display = self.enhance_brightness(display_image)
     # partial_update(display)
     logging.info("Prepare e-ink screen")
     logging.info("Clear e-ink screen")
@@ -118,18 +116,17 @@ def display_image_on_epd(display_image):
     display.epd.wait_display_ready()
     logging.info("Display image on e-ink screen")
     display.frame_buf.paste(0xFF, box=(0, 0, display.width, display.height))
-        # Image.open(display_image)
+    # Image.open(display_image)
     dims = (display.width, display.height)
     display_image.thumbnail(dims)
     paste_coords = [dims[i] - display_image.size[i] for i in (0, 1)]  # align image with bottom of display
     display.frame_buf.paste(display_image, paste_coords)
     display.draw_full(constants.DisplayModes.GC16)
     # logging.info("Send e-ink screen to sleep")
-        # epd.sleep()
-        # display.epd.sleep()
+    # epd.sleep()
+    # display.epd.sleep()
     # except Exception as e:
     #     logging.error(f"Error displaying image on e-ink screen: {e}")
-
 
 
 def partial_update(display):
@@ -139,12 +136,12 @@ def partial_update(display):
     display.frame_buf.paste(0xFF, box=(0, 0, display.width, display.height))
 
     print('  writing full...')
-    _place_text(display.frame_buf, 'partial', x_offset=-display.width//4)
+    _place_text(display.frame_buf, 'partial', x_offset=-display.width // 4)
     display.draw_full(constants.DisplayModes.GC16)
 
     # TODO: should use 1bpp for partial text update
     print('  writing partial...')
-    _place_text(display.frame_buf, 'update', x_offset=+display.width//4)
+    _place_text(display.frame_buf, 'update', x_offset=+display.width // 4)
     display.draw_partial(constants.DisplayModes.DU)
 
 
@@ -183,7 +180,7 @@ def on_message(client, userdata, msg):
     image_data = Image.open(io.BytesIO(msg.payload))
     # try:
     display_image_on_epd(image_data)
-        # time.sleep(5)
+    # time.sleep(5)
     # except Exception as e:
     #     logging.error(f"Error decoding and displaying the image: {e}")
 
@@ -205,7 +202,6 @@ async def lifespan(app: FastAPI):
         print()
         # epd.width = screen_config.width
         # epd.height = screen_config.height
-
 
         mqtt_client.username_pw_set(mqtt_config.username, mqtt_config.password)
         mqtt_client.tls_set()
@@ -245,6 +241,23 @@ async def root():
     app_config_without_password = app_config.copy()
     app_config_without_password.mqtt.password = "********"
     return app_config_without_password
+
+
+# @app.get('/display')
+# def display_image():
+#     try:
+#         # Open image from URL
+#         image = Image.open(image_url)
+#
+#         # Convert image to RGB mode if necessary
+#         if image.mode != 'RGB':
+#             image = image.convert('RGB')
+#
+#         # Resize image to fit the screen (assuming a 800x600 display for example)
+#         image = image.resize((800, 600))
+#
+#         # Display image
+#         display.display_image(image)
 
 
 if __name__ == "__main__":
