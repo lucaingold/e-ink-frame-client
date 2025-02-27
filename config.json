@@ -1,5 +1,5 @@
 {
-  "broker_address": "broker"
+  "broker_address": "broker",
   "broker_port": 8883,
   "username": "einkframe",
   "password": "123",

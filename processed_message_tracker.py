@@ -1,14 +1,12 @@
 import time
 
-
 class ProcessedMessageTracker:
     def __init__(self, max_message_age=300):
         self.processed_messages = {}
         self.MAX_MESSAGE_AGE = max_message_age
 
     def should_process_message(self, message_id, timestamp):
-        return not self.is_message_processed(message_id)
-        # and not self.is_message_expired(timestamp)
+        return not self.is_message_processed(message_id) and not self.is_message_expired(timestamp)
 
     def is_message_processed(self, message_id):
         if message_id not in self.processed_messages:
@@ -33,8 +31,6 @@ class ProcessedMessageTracker:
 
     def is_message_expired(self, timestamp):
         current_time = int(time.time())
-        print(current_time)
-        print(timestamp)
         expired = current_time - timestamp > self.MAX_MESSAGE_AGE
         if expired:
             print("Ignoring message - too old")

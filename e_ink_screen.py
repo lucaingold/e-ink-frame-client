@@ -1,61 +1,93 @@
+from typing import Tuple, Optional
 import logging
-import os
 from omni_epd import displayfactory, EPDNotFoundError
 
+# Constants
 DISPLAY_TYPE = "waveshare_epd.it8951"
+DEFAULT_WIDTH = 1600
+DEFAULT_HEIGHT = 1200
+ROTATION_FACTOR = 90
+
+logger = logging.getLogger(__name__)
 
 class EInkScreen:
-    def __init__(self, screen_width=1600, screen_height=1200):
-        # Config Dictionary for omni-epd
-        self.config_dict = {}
-
-        # EPD
-        self.epd = None
-
-        # Image
-        self.image_base = None
-        self.image_display = None
+    """Manages the E-Ink display operations."""
+    
+    def __init__(self, screen_width: int = DEFAULT_WIDTH, screen_height: int = DEFAULT_HEIGHT) -> None:
+        """
+        Initialize the E-Ink screen with specified dimensions.
+        
+        Args:
+            screen_width (int): Width of the screen in pixels
+            screen_height (int): Height of the screen in pixels
+        """
         self.width = screen_width
         self.height = screen_height
-        pass
+        self.config_dict = {}
+        self.epd = None
+        self.image_display = None
 
-    def run(self):
-        logging.info("einkframe has started")
+    def run(self) -> None:
+        """Initialize and configure the E-Ink display."""
+        logger.info("Initializing E-Ink display")
         try:
-            self.epd = displayfactory.load_display_driver(DISPLAY_TYPE, self.config_dict)
-            self.epd.width = self.width
-            self.epd.height = self.height
-            image_rotate = 0
-            # Set width and height for einkframe program
-            self.width, self.height = self.set_rotate(self.epd.width, self.epd.height, image_rotate)
+            self._initialize_display()
         except EPDNotFoundError:
-            logging.error(f"Couldn't find {DISPLAY_TYPE}")
-            exit()
+            logger.error(f"Display type {DISPLAY_TYPE} not found")
+            raise
+        except Exception as e:
+            logger.error(f"Failed to initialize display: {e}")
+            raise
 
-        except KeyboardInterrupt:
-            logging.info("ctrl + c:")
-            exit()
+    def _initialize_display(self) -> None:
+        """Set up the display with proper configuration."""
+        self.epd = displayfactory.load_display_driver(DISPLAY_TYPE, self.config_dict)
+        self.epd.width = self.width
+        self.epd.height = self.height
+        self.width, self.height = self._set_rotate(self.epd.width, self.epd.height)
+        logger.info(f"Display initialized with dimensions: {self.width}x{self.height}")
 
-        except BaseException as e:
-            logging.error(e)
-            exit()
+    def display_image_on_epd(self, display_image) -> None:
+        """
+        Display an image on the E-Ink screen.
+        
+        Args:
+            display_image: PIL Image to display
+        """
+        try:
+            self.image_display = display_image.copy()
+            logger.info("Preparing E-Ink screen")
+            self.epd.prepare()
+            self.epd.display(self.image_display)
+        except Exception as e:
+            logger.error(f"Failed to display image: {e}")
+            raise
+        finally:
+            self._sleep_display()
 
-    pass
-
-    def display_image_on_epd(self, display_image):
-        self.image_display = display_image.copy()
-        logging.info("Prepare e-ink screen")
-        self.epd.prepare()
-        self.epd.display(self.image_display)
-        logging.info("Send e-ink screen to sleep")
-        self.epd.sleep()
-        self.epd.close()
-        return
+    def _sleep_display(self) -> None:
+        """Put the display to sleep and close connection."""
+        try:
+            logger.info("Putting E-Ink screen to sleep")
+            self.epd.sleep()
+            self.epd.close()
+        except Exception as e:
+            logger.error(f"Failed to sleep display: {e}")
+            raise
 
     @staticmethod
-    def set_rotate(width, height, rotate=0):
-        if (rotate / 90) % 2 == 1:
-            temp = width
-            width = height
-            height = temp
+    def _set_rotate(width: int, height: int, rotate: int = 0) -> Tuple[int, int]:
+        """
+        Calculate dimensions after rotation.
+        
+        Args:
+            width (int): Original width
+            height (int): Original height
+            rotate (int): Rotation angle in degrees
+            
+        Returns:
+            Tuple[int, int]: New width and height
+        """
+        if (rotate / ROTATION_FACTOR) % 2 == 1:
+            return height, width
         return width, height

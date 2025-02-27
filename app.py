@@ -1,3 +1,4 @@
+from typing import Tuple, Optional, Dict, Any
 import io
 import threading
 import time
@@ -7,194 +8,182 @@ import paho.mqtt.client as mqtt
 import json
 from PIL import Image
 import socket
-# from e_ink_screen_mock import EInkScreen
 from e_ink_screen import EInkScreen
 from processed_message_tracker import ProcessedMessageTracker
 from pijuice import PiJuice
 import RPi.GPIO as GPIO
 import atexit
 
-logging.basicConfig(level=logging.DEBUG, format='%(asctime)s - %(levelname)s - %(message)s')
-e_ink_screen_lock = threading.Lock()
-processed_message_tracker = ProcessedMessageTracker()
-
+# Constants
 STATUS_ROOT = "data"
 STATUS_POWER = "powerInput"
+RECONNECT_DELAY = 5
+LED_BLINK_DURATION = 0.5
+DEFAULT_IP = '127.0.0.1'
+IP_CHECK_ADDRESS = ('10.254.254.254', 1)
+PIJUICE_ADDRESS = 0x14
+PIJUICE_BUS = 1
 
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
-def turn_on_led(pin):
-    GPIO.output(pin, GPIO.HIGH)
+class EInkFrameClient:
+    def __init__(self, config_path: str = "config.json"):
+        self.config = self._load_config(config_path)
+        self.e_ink_screen_lock = threading.Lock()
+        self.processed_message_tracker = ProcessedMessageTracker()
+        self.e_ink_screen = None
+        self.client = None
+        self._setup_mqtt_client()
+        self._setup_hardware()
 
-
-def turn_off_led(pin):
-    GPIO.output(pin, GPIO.LOW)
-
-
-def blink_led(pin):
-    turn_on_led(pin)
-    time.sleep(0.5)
-    turn_off_led(pin)
-    time.sleep(0.5)
-    turn_on_led(pin)
-    time.sleep(0.5)
-    turn_off_led(pin)
-    logging.info("LED blinked")
-
-
-def get_status_payload(status):
-    power_status, battery_percentage = get_charge_status()
-    wired = power_status == 'PRESENT'
-    hostname = socket.gethostname()
-    ip_address = get_ip()
-    return json.dumps({
-        "hostname": hostname,
-        "ip_address": ip_address,
-        "mac": config["device_id"],
-        'status': status,
-        'wired': wired,
-        'battery': battery_percentage,
-    })
-
-
-def get_ip():
-    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-    s.settimeout(0)
-    try:
-        s.connect(('10.254.254.254', 1))
-        ip = s.getsockname()[0]
-    except Exception:
-        ip = '127.0.0.1'
-    finally:
-        s.close()
-    return ip
-
-
-def get_charge_status():
-    try:
-        pijuice = PiJuice(1, 0x14)
-        power_status = pijuice.status.GetStatus()[STATUS_ROOT][STATUS_POWER]
-        charge_level = pijuice.status.GetChargeLevel()['data']
-        logging.info(f'Status: {power_status}, Level: {charge_level}')
-        return power_status, charge_level
-        # instance.charge_level = PiJuiceHandler.get_charge_status(power_status, charge_level)
-    except Exception as e:
-        logging.error(f'Error while reading pijuice status', e)
-        return None, None  # Return default values in case of an exception
-
-
-def get_status_topic():
-    device_id = config["device_id"]
-    device_id_placeholder = config["device_id_placeholder"]
-    status_topic = config["topic_device_status"].replace(device_id_placeholder, device_id)
-    return status_topic
-
-
-def get_display_topic():
-    device_id = config["device_id"]
-    device_id_placeholder = config["device_id_placeholder"]
-    return config["topic_image_display"].replace(device_id_placeholder, device_id)
-
-
-# Callback when the client connects to the broker
-def on_connect(client, userdata, flags, rc):
-    logging.info("Connected with result code " + str(rc))
-    # Subscribe to a topic upon successful connection
-    client.subscribe(config["topic_image_display"])
-    logging.info(f'Subscribed to {config["topic_image_display"]}')
-    client.publish(config["topic_device_status"], payload=get_status_payload('online'), qos=1,
-                   retain=True)
-
-
-# Callback when a message is received from the broker
-def on_message(client, userdata, msg):
-    logging.info("Received message on topic {}".format(msg.topic))
-    if msg.topic == config["topic_image_display"]:
+    def _load_config(self, config_path: str) -> Dict[str, Any]:
         try:
-            if processed_message_tracker.should_process_message(msg.mid, msg.timestamp):
-                image_data = msg.payload
-                img = Image.open(io.BytesIO(image_data))
-                with e_ink_screen_lock:
-                    e_ink_screen.display_image_on_epd(img)
-                    blink_led(config["led_pin"])
-                    time.sleep(5)
+            with open(config_path, "r") as f:
+                config = json.load(f)
+            config["topic_device_status"] = self._get_status_topic(config)
+            config["topic_image_display"] = self._get_display_topic(config)
+            return config
         except Exception as e:
-            logging.error("Error decoding and displaying the image:", str(e))
+            logger.error(f"Failed to load config: {e}")
+            raise
 
+    def _setup_hardware(self) -> None:
+        try:
+            self.e_ink_screen = EInkScreen(
+                self.config["screen_width"],
+                self.config["screen_height"]
+            )
+            self.e_ink_screen.run()
+            GPIO.setup(self.config["led_pin"], GPIO.OUT)
+        except Exception as e:
+            logger.error(f"Failed to set up hardware: {e}")
+            raise
 
-# Callback when the client is disconnected from the broker
-def on_disconnect(client, userdata, rc):
-    logging.info("Disconnected from the broker. Will publish offline status. Trying to reconnect...")
-    client.publish(config["topic_device_status"], payload=get_status_payload('offline'), qos=1, retain=True)
-    # Add a delay before attempting to reconnect
-    time.sleep(5)
-    client.reconnect()
+    def _setup_mqtt_client(self) -> None:
+        self.client = mqtt.Client(client_id=str(uuid.uuid4()))
+        if self.config.get("password"):
+            self.client.username_pw_set(
+                self.config["username"],
+                self.config["password"]
+            )
+            self.client.tls_set()
 
-
-def load_config():
-    with open("config.json", "r") as f:
-        return json.load(f)
-
-
-def shutdown_handler():
-    on_disconnect(client, None, None)
-    logging.info("Shutting down gracefully...")
-
-
-def main():
-    try:
-        global config
-        global e_ink_screen
-        global client
-        config = load_config()
-        config["topic_device_status"] = get_status_topic()
-        config["topic_image_display"] = get_display_topic()
-
-        led_pin = config["led_pin"]
-        # try:
-
-        e_ink_screen = EInkScreen(config["screen_width"], config["screen_height"])
-        e_ink_screen.run()
-        current_mode = GPIO.getmode()
-
-        logging.info(current_mode)
-
-        GPIO.setup(led_pin, GPIO.OUT)
-
-        client = mqtt.Client(client_id=str(uuid.uuid4()))
-
-        if (config["password"]):
-            client.username_pw_set(config["username"], config["password"])
-            client.tls_set()
-
-        atexit.register(shutdown_handler)
-
-        # Set the callbacks
-        client.on_connect = on_connect
-        client.on_message = on_message
-        client.on_disconnect = on_disconnect
-
-        atexit.register(on_disconnect)
+        self.client.on_connect = self._on_connect
+        self.client.on_message = self._on_message
+        self.client.on_disconnect = self._on_disconnect
 
         # Configure Last Will and Testament
-        lw_status = get_status_payload('offline')
-        logging.info(config["topic_device_status"])
-        client.will_set(config["topic_device_status"], payload=lw_status, qos=1, retain=True)
+        lw_status = self._get_status_payload('offline')
+        self.client.will_set(
+            self.config["topic_device_status"],
+            payload=lw_status,
+            qos=1,
+            retain=True
+        )
 
-        # Connect to the broker
-        client.connect(host=config["broker_address"], port=config["broker_port"], keepalive=30)
+    def _get_charge_status(self) -> Tuple[Optional[str], Optional[int]]:
+        try:
+            pijuice = PiJuice(PIJUICE_BUS, PIJUICE_ADDRESS)
+            status = pijuice.status.GetStatus()[STATUS_ROOT][STATUS_POWER]
+            charge_level = pijuice.status.GetChargeLevel()['data']
+            logger.info(f'Status: {status}, Level: {charge_level}')
+            return status, charge_level
+        except Exception as e:
+            logger.error(f'Error reading PiJuice status: {e}')
+            return None, None
 
-        blink_led(led_pin)
+    def _blink_led(self) -> None:
+        pin = self.config["led_pin"]
+        for _ in range(2):
+            GPIO.output(pin, GPIO.HIGH)
+            time.sleep(LED_BLINK_DURATION)
+            GPIO.output(pin, GPIO.LOW)
+            time.sleep(LED_BLINK_DURATION)
+        logger.info("LED blinked")
 
-        logging.info("Started")
+    def _get_ip(self) -> str:
+        with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
+            s.settimeout(0)
+            try:
+                s.connect(IP_CHECK_ADDRESS)
+                return s.getsockname()[0]
+            except Exception as e:
+                logger.warning(f"Failed to get IP: {e}")
+                return DEFAULT_IP
 
-        # Loop to maintain the connection and process incoming messages
-        client.loop_forever()
-        # except KeyboardInterrupt:
-        #     turn_off_led(led_pin)
-    except KeyboardInterrupt:
-        pass
-    finally:
-        shutdown_handler()
+    def _get_status_payload(self, status: str) -> str:
+        power_status, battery_percentage = self._get_charge_status()
+        return json.dumps({
+            "hostname": socket.gethostname(),
+            "ip_address": self._get_ip(),
+            "mac": self.config["device_id"],
+            'status': status,
+            'wired': power_status == 'PRESENT',
+            'battery': battery_percentage,
+        })
+
+    def _on_connect(self, client: mqtt.Client, userdata: Any, flags: Dict, rc: int) -> None:
+        logger.info(f"Connected with result code {rc}")
+        client.subscribe(self.config["topic_image_display"])
+        client.publish(
+            self.config["topic_device_status"],
+            payload=self._get_status_payload('online'),
+            qos=1,
+            retain=True
+        )
+
+    def _on_message(self, client: mqtt.Client, userdata: Any, msg: mqtt.MQTTMessage) -> None:
+        logger.info(f"Received message on topic {msg.topic}")
+        if msg.topic == self.config["topic_image_display"]:
+            threading.Thread(target=self._process_image_message, args=(msg,)).start()
+
+    def _process_image_message(self, msg: mqtt.MQTTMessage) -> None:
+        try:
+            if self.processed_message_tracker.should_process_message(msg.mid, msg.timestamp):
+                img = Image.open(io.BytesIO(msg.payload))
+                with self.e_ink_screen_lock:
+                    self.e_ink_screen.display_image_on_epd(img)
+                    self._blink_led()
+                    time.sleep(5)
+                    self.processed_message_tracker.mark_message_as_processed(msg.mid, msg.timestamp)
+        except Exception as e:
+            logger.error(f"Error processing image: {e}")
+
+    def _on_disconnect(self, client: mqtt.Client, userdata: Any, rc: int) -> None:
+        logger.info("Disconnected from broker. Publishing offline status...")
+        client.publish(
+            self.config["topic_device_status"],
+            payload=self._get_status_payload('offline'),
+            qos=1,
+            retain=True
+        )
+        time.sleep(RECONNECT_DELAY)
+        client.reconnect()
+
+    def run(self) -> None:
+        try:
+            self.client.connect(
+                host=self.config["broker_address"],
+                port=self.config["broker_port"],
+                keepalive=30
+            )
+            self._blink_led()
+            logger.info("E-Ink Frame Client started")
+            self.client.loop_forever()
+        except KeyboardInterrupt:
+            logger.info("Shutting down...")
+        finally:
+            self._on_disconnect(self.client, None, 0)
+            GPIO.cleanup()
+
+def main():
+    client = EInkFrameClient()
+    client.run()
 
 if __name__ == "__main__":
     main()

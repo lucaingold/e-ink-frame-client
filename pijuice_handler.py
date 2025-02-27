@@ -5,6 +5,7 @@
 import os
 import sys
 import time
+import logging
 from enum import Enum
 
 from pijuice import PiJuice
@@ -46,35 +47,35 @@ class PiJuiceHandler:
         Attempts to run pycasso based on configuration and pijuice settings.
     """
     def __init__(self):
-
-        return
+        pass
 
     @staticmethod
     def safe_pijuice_shutdown(pijuice):
-        # Remove power to PiJuice MCU IO pins
-        pijuice.power.SetSystemPowerSwitch(0)
-
-        # In 5 seconds we are not so nice - Remove 5V power to RPi
-        pijuice.power.SetPowerOff(5)
-
-        # Enable wakeup alarm
-        pijuice.rtcAlarm.SetWakeupEnabled(True)
-
-        # But try to shut down nicely first
-        os.system("sudo shutdown -h 0")
-        sys.exit()
+        try:
+            pijuice.power.SetSystemPowerSwitch(0)
+            pijuice.power.SetPowerOff(5)
+            pijuice.rtcAlarm.SetWakeupEnabled(True)
+            os.system("sudo shutdown -h 0")
+            sys.exit()
+        except Exception as e:
+            logging.error(f"Failed to shutdown PiJuice safely: {e}")
 
     @staticmethod
     def system_shutdown():
-        os.system("shutdown /s /t 1")
-        sys.exit()
+        try:
+            os.system("shutdown /s /t 1")
+            sys.exit()
+        except Exception as e:
+            logging.error(f"Failed to shutdown system: {e}")
 
     @staticmethod
     def pijuice_led_disable(pijuice):
-        led_config = {'function': 'NOT_USED', 'parameter': {'r': 0, 'g': 0, 'b': 0}}
-        pijuice.config.SetLedConfiguration('D1', led_config)
-        pijuice.config.SetLedConfiguration('D2', led_config)
-        return
+        try:
+            led_config = {'function': 'NOT_USED', 'parameter': {'r': 0, 'g': 0, 'b': 0}}
+            pijuice.config.SetLedConfiguration('D1', led_config)
+            pijuice.config.SetLedConfiguration('D2', led_config)
+        except Exception as e:
+            logging.error(f"Failed to disable PiJuice LEDs: {e}")
 
     @staticmethod
     def get_charge_status(power_status, charge_level):
@@ -129,7 +130,7 @@ class PiJuiceHandler:
                 sys.exit()
 
         logging.info(f"Power status is \'{power_status}\'")
-        logging.info(f"Battery level is \'{charge_level}\'")
+        logging.info(f"Battery level is \'{charge_level}\'')
 
         try:
             instance.run()
