@@ -1,5 +1,6 @@
 from typing import Tuple, Optional
 import logging
+import time
 from omni_epd import displayfactory, EPDNotFoundError
 
 # Constants
@@ -7,6 +8,8 @@ DISPLAY_TYPE = "waveshare_epd.it8951"
 DEFAULT_WIDTH = 1600
 DEFAULT_HEIGHT = 1200
 ROTATION_FACTOR = 90
+MAX_RETRIES = 3
+RETRY_DELAY = 2
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +26,12 @@ class EInkScreen:
         """
         self.width = screen_width
         self.height = screen_height
-        self.config_dict = {}
+        self.config_dict = {
+            'spi_bus': 0,
+            'spi_device': 0,
+            'spi_hz': 2000000,
+            'vcom': -2.27
+        }
         self.epd = None
         self.image_display = None
 
@@ -31,23 +39,31 @@ class EInkScreen:
         """Initialize and configure the E-Ink display."""
         logger.info("Initializing E-Ink display")
         try:
-            self._initialize_display()
+            self._initialize_display_with_retry()
         except EPDNotFoundError:
             logger.error(f"Display type {DISPLAY_TYPE} not found")
             raise
         except Exception as e:
-            logger.error(f"Failed to initialize display: {e}")
+            logger.error(f"Failed to initialize display after {MAX_RETRIES} attempts: {e}")
             raise
 
-    def _initialize_display(self) -> None:
-        """Set up the display with proper configuration."""
-        logger.debug("Loading display driver")
-        self.epd = displayfactory.load_display_driver(DISPLAY_TYPE, self.config_dict)
-        self.epd.width = self.width
-        self.epd.height = self.height
-        self.width, self.height = self._set_rotate(self.epd.width, self.epd.height)
-        logger.info(f"Display initialized with dimensions: {self.width}x{self.height}")
-        logger.debug(f"SPI configuration: {self.config_dict}")
+    def _initialize_display_with_retry(self) -> None:
+        """Set up the display with proper configuration and retry mechanism."""
+        for attempt in range(MAX_RETRIES):
+            try:
+                logger.debug(f"Display initialization attempt {attempt + 1}/{MAX_RETRIES}")
+                self.epd = displayfactory.load_display_driver(DISPLAY_TYPE, self.config_dict)
+                self.epd.width = self.width
+                self.epd.height = self.height
+                self.width, self.height = self._set_rotate(self.epd.width, self.epd.height)
+                logger.info(f"Display initialized with dimensions: {self.width}x{self.height}")
+                return
+            except Exception as e:
+                logger.error(f"Attempt {attempt + 1} failed: {e}")
+                if attempt < MAX_RETRIES - 1:
+                    time.sleep(RETRY_DELAY)
+                else:
+                    raise
 
     def display_image_on_epd(self, display_image) -> None:
         """
