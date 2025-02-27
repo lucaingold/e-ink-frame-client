@@ -26,11 +26,25 @@ class EInkScreen:
         """
         self.width = screen_width
         self.height = screen_height
+        # Update configuration dictionary structure
         self.config_dict = {
-            'spi_bus': 0,
-            'spi_device': 0,
-            'spi_hz': 2000000,
-            'vcom': -2.27
+            'EPD': {
+                'type': DISPLAY_TYPE,
+                'vcom': -2.27,
+                'mode': 'gray16'
+            },
+            'waveshare_epd.it8951': {
+                'spi_bus': 0,
+                'spi_device': 0,
+                'spi_hz': 2000000,
+                'reset_pin': 17,
+                'busy_pin': 24,
+                'vcom': -2.06
+            },
+            'Image Enhancements': {
+                'color': 1,
+                'contrast': 1
+            }
         }
         self.epd = None
         self.image_display = None

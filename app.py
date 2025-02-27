@@ -72,7 +72,17 @@ class EInkFrameClient:
             raise
 
     def _setup_mqtt_client(self) -> None:
-        self.client = mqtt.Client(client_id=str(uuid.uuid4()), protocol=mqtt.MQTTv311)
+        # Use MQTT5 protocol version
+        self.client = mqtt.Client(
+            client_id=str(uuid.uuid4()),
+            protocol=mqtt.MQTTv5
+        )
+        
+        # Set protocol version specific callbacks
+        self.client.on_connect = self._on_connect_v5
+        self.client.on_message = self._on_message
+        self.client.on_disconnect = self._on_disconnect_v5
+
         if self.config.get("password"):
             self.client.username_pw_set(
                 self.config["username"],
@@ -80,17 +90,15 @@ class EInkFrameClient:
             )
             self.client.tls_set()
 
-        self.client.on_connect = self._on_connect
-        self.client.on_message = self._on_message
-        self.client.on_disconnect = self._on_disconnect
-
-        # Configure Last Will and Testament
+        # Configure Last Will and Testament with MQTT v5 properties
         lw_status = self._get_status_payload('offline')
+        props = mqtt.Properties(PackageIdentifier=1)
         self.client.will_set(
             self.config["topic_device_status"],
             payload=lw_status,
             qos=1,
-            retain=True
+            retain=True,
+            properties=props
         )
 
     def _get_charge_status(self) -> Tuple[Optional[str], Optional[int]]:
@@ -134,14 +142,16 @@ class EInkFrameClient:
             'battery': battery_percentage,
         })
 
-    def _on_connect(self, client: mqtt.Client, userdata: Any, flags: Dict, rc: int) -> None:
+    def _on_connect_v5(self, client: mqtt.Client, userdata: Any, flags: Dict, rc: int, properties: mqtt.Properties) -> None:
         logger.info(f"Connected with result code {rc}")
         client.subscribe(self.config["topic_image_display"])
+        props = mqtt.Properties(PackageIdentifier=1)
         client.publish(
             self.config["topic_device_status"],
             payload=self._get_status_payload('online'),
             qos=1,
-            retain=True
+            retain=True,
+            properties=props
         )
 
     def _on_message(self, client: mqtt.Client, userdata: Any, msg: mqtt.MQTTMessage) -> None:
@@ -161,16 +171,19 @@ class EInkFrameClient:
         except Exception as e:
             logger.error(f"Error processing image: {e}")
 
-    def _on_disconnect(self, client: mqtt.Client, userdata: Any, rc: int) -> None:
-        logger.info("Disconnected from broker. Publishing offline status...")
+    def _on_disconnect_v5(self, client: mqtt.Client, userdata: Any, rc: int, properties: mqtt.Properties) -> None:
+        logger.info(f"Disconnected with result code {rc}")
+        props = mqtt.Properties(PackageIdentifier=1)
         client.publish(
             self.config["topic_device_status"],
             payload=self._get_status_payload('offline'),
             qos=1,
-            retain=True
+            retain=True,
+            properties=props
         )
-        time.sleep(RECONNECT_DELAY)
-        client.reconnect()
+        if rc != 0:
+            time.sleep(RECONNECT_DELAY)
+            client.reconnect()
 
     def run(self) -> None:
         try:
