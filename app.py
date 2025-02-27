@@ -71,7 +71,7 @@ class EInkFrameClient:
             raise
 
     def _setup_mqtt_client(self) -> None:
-        self.client = mqtt.Client(client_id=str(uuid.uuid4()))
+        self.client = mqtt.Client(client_id=str(uuid.uuid4()), protocol=mqtt.MQTTv311)
         if self.config.get("password"):
             self.client.username_pw_set(
                 self.config["username"],

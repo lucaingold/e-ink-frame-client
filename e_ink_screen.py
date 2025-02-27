@@ -41,6 +41,7 @@ class EInkScreen:
 
     def _initialize_display(self) -> None:
         """Set up the display with proper configuration."""
+        logger.debug("Loading display driver")
         self.epd = displayfactory.load_display_driver(DISPLAY_TYPE, self.config_dict)
         self.epd.width = self.width
         self.epd.height = self.height
