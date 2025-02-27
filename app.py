@@ -11,7 +11,7 @@ import socket
 from e_ink_screen import EInkScreen
 from processed_message_tracker import ProcessedMessageTracker
 from pijuice import PiJuice
-import RPi.GPIO as GPIO
+import RPi.GPIO as GPIO  # Ensure this is the correct library
 import atexit
 
 # Constants
@@ -51,6 +51,12 @@ class EInkFrameClient:
         except Exception as e:
             logger.error(f"Failed to load config: {e}")
             raise
+
+    def _get_status_topic(self, config: Dict[str, Any]) -> str:
+        return config["topic_device_status"].replace("{device_id}", config["device_id"])
+
+    def _get_display_topic(self, config: Dict[str, Any]) -> str:
+        return config["topic_image_display"].replace("{device_id}", config["device_id"])
 
     def _setup_hardware(self) -> None:
         try:
