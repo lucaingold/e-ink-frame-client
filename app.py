@@ -11,7 +11,7 @@ import socket
 from e_ink_screen import EInkScreen
 from processed_message_tracker import ProcessedMessageTracker
 from pijuice import PiJuice
-import RPi.GPIO as GPIO  # Ensure this is the correct library
+import RPi.GPIO as GPIO
 import atexit
 
 # Constants
@@ -60,6 +60,7 @@ class EInkFrameClient:
 
     def _setup_hardware(self) -> None:
         try:
+            logger.debug("Initializing E-Ink screen with width: %s, height: %s", self.config["screen_width"], self.config["screen_height"])
             self.e_ink_screen = EInkScreen(
                 self.config["screen_width"],
                 self.config["screen_height"]

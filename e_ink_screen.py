@@ -47,6 +47,7 @@ class EInkScreen:
         self.epd.height = self.height
         self.width, self.height = self._set_rotate(self.epd.width, self.epd.height)
         logger.info(f"Display initialized with dimensions: {self.width}x{self.height}")
+        logger.debug(f"SPI configuration: {self.config_dict}")
 
     def display_image_on_epd(self, display_image) -> None:
         """
