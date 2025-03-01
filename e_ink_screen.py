@@ -10,6 +10,7 @@ DEFAULT_HEIGHT = 1200
 ROTATION_FACTOR = 90
 MAX_RETRIES = 3
 RETRY_DELAY = 2
+VCOM = -2.27  # Specific VCOM value for your hardware
 
 logger = logging.getLogger(__name__)
 
@@ -34,17 +35,17 @@ class EInkScreen:
         self.config_dict = {
             'EPD': {
                 'type': DISPLAY_TYPE,
-                'vcom': -2.27,
+                'vcom': VCOM,
                 'mode': 'gray16'
             },
             'waveshare_epd.it8951': {
                 'spi_bus': 0,
                 'spi_device': 0,
-                'spi_hz': 2000000,
+                'spi_hz': 24000000,  # 24MHz SPI clock
                 'reset_pin': 17,
                 'busy_pin': 24,
-                'vcom': -2.27
-},
+                'vcom': VCOM
+            },
             'Image Enhancements': {
                 'color': 1,
                 'contrast': 1
@@ -91,31 +92,11 @@ class EInkScreen:
         """Initialize and configure the E-Ink display."""
         logger.info("Initializing E-Ink display")
         try:
-            self._initialize_display_with_retry()
-        except EPDNotFoundError:
-            logger.error(f"Display type {DISPLAY_TYPE} not found")
-            raise
+            self.epd.prepare()
+            logger.info("Display prepared successfully")
         except Exception as e:
-            logger.error(f"Failed to initialize display after {MAX_RETRIES} attempts: {e}")
+            logger.error(f"Failed to prepare display: {e}")
             raise
-
-    def _initialize_display_with_retry(self) -> None:
-        """Set up the display with proper configuration and retry mechanism."""
-        for attempt in range(MAX_RETRIES):
-            try:
-                logger.debug(f"Display initialization attempt {attempt + 1}/{MAX_RETRIES}")
-                self.epd = displayfactory.load_display_driver(DISPLAY_TYPE, self.config_dict)
-                self.epd.width = self.width
-                self.epd.height = self.height
-                self.width, self.height = self._set_rotate(self.epd.width, self.epd.height)
-                logger.info(f"Display initialized with dimensions: {self.width}x{self.height}")
-                return
-            except Exception as e:
-                logger.error(f"Attempt {attempt + 1} failed: {e}")
-                if attempt < MAX_RETRIES - 1:
-                    time.sleep(RETRY_DELAY)
-                else:
-                    raise
 
     def display_image_on_epd(self, display_image) -> None:
         """
@@ -125,10 +106,12 @@ class EInkScreen:
             display_image: PIL Image to display
         """
         try:
-            self.image_display = display_image.copy()
-            logger.info("Preparing E-Ink screen")
+            logger.info("Preparing to display image")
             self.epd.prepare()
-            self.epd.display(self.image_display)
+            resized_image = display_image.resize((self.width, self.height))
+            logger.info("Displaying image")
+            self.epd.display(resized_image)
+            logger.info("Image displayed successfully")
         except Exception as e:
             logger.error(f"Failed to display image: {e}")
             raise
