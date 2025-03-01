@@ -28,14 +28,8 @@ class EInkScreen:
         self.width = width
         self.height = height
         self.mock_epd = mock_epd
+        self.epd = None
         
-        if mock_epd:
-            from mocked_epd import EPD
-        else:
-            from waveshare_epd import EPD
-            
-        self.epd = EPD()
-        logger.info(f"Initialized E-Ink screen with mock_epd={mock_epd}")
         # Update configuration dictionary structure
         self.config_dict = {
             'EPD': {
@@ -56,6 +50,20 @@ class EInkScreen:
                 'contrast': 1
             }
         }
+        
+        if mock_epd:
+            from mocked_epd import EPD
+            self.epd = EPD()
+        else:
+            try:
+                self.epd = displayfactory.load_display_driver(DISPLAY_TYPE, self.config_dict)
+                self.epd.width = self.width
+                self.epd.height = self.height
+            except Exception as e:
+                logger.error(f"Failed to initialize display driver: {e}")
+                raise
+                
+        logger.info(f"Initialized E-Ink screen with mock_epd={mock_epd}")
         self.image_display = None
 
     def run(self) -> None:
