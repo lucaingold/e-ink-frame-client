@@ -11,7 +11,6 @@ import socket
 from e_ink_screen import EInkScreen
 from processed_message_tracker import ProcessedMessageTracker
 from pijuice import PiJuice
-import RPi.GPIO as GPIO
 import atexit
 
 # Constants
@@ -31,6 +30,14 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+try:
+    import RPi.GPIO as GPIO
+except ImportError:
+    # Mock GPIO for development environments
+    from unittest.mock import MagicMock
+    GPIO = MagicMock()
+    print("Using mock GPIO")
+
 class EInkFrameClient:
     def __init__(self, config_path: str = "config.json"):
         self.config = self._load_config(config_path)
@@ -42,6 +49,17 @@ class EInkFrameClient:
         self._setup_pijuice()
         self._setup_mqtt_client()
         self._setup_hardware()
+        
+        # Add cleanup handler
+        atexit.register(self._cleanup)
+
+    def _cleanup(self):
+        if self.client:
+            self._on_disconnect_v5(self.client, None, 0, None)
+        if not self.config.get("mock_epd", False):
+            GPIO.cleanup()
+        else:
+            logger.info("Mock mode: Skipping GPIO cleanup")
 
     def _load_config(self, config_path: str) -> Dict[str, Any]:
         try:
@@ -62,13 +80,23 @@ class EInkFrameClient:
 
     def _setup_hardware(self) -> None:
         try:
-            logger.debug("Initializing E-Ink screen with width: %s, height: %s", self.config["screen_width"], self.config["screen_height"])
+            logger.debug("Initializing E-Ink screen with width: %s, height: %s", 
+                        self.config["screen_width"], 
+                        self.config["screen_height"])
+            
+            is_mock = self.config.get("mock_epd", False)
             self.e_ink_screen = EInkScreen(
                 self.config["screen_width"],
-                self.config["screen_height"]
+                self.config["screen_height"],
+                mock_epd=is_mock
             )
             self.e_ink_screen.run()
-            GPIO.setup(self.config["led_pin"], GPIO.OUT)
+            
+            if not is_mock:
+                GPIO.setup(self.config["led_pin"], GPIO.OUT)
+            else:
+                logger.info("Mock mode: Skipping GPIO setup")
+                
         except Exception as e:
             logger.error(f"Failed to set up hardware: {e}")
             raise
@@ -77,19 +105,15 @@ class EInkFrameClient:
         # Update to use MQTT protocol version 5
         self.client = mqtt.Client(protocol=mqtt.MQTTv5)
         
-        # Fix the Properties initialization
-        props = mqtt.Properties()
-        props.PacketIdentifier = 1  # Note: PacketIdentifier instead of PackageIdentifier
+        # Properties needs a packet type for MQTTv5
+        props = mqtt.Properties(mqtt.PacketTypes.CONNECT)
         
         self.client.username_pw_set(username=self.config["username"], password=self.config["password"])
         self.client.on_connect = self._on_connect_v5
         self.client.on_message = self._on_message
+        self.client.on_disconnect = self._on_disconnect_v5  # Add disconnect handler
         
-        try:
-            self.client.connect(self.config["broker_address"], self.config["broker_port"])
-        except Exception as e:
-            logging.error(f"Failed to connect to MQTT broker: {e}")
-            raise
+        # Remove the connection attempt from here as it's done in run()
 
     def _setup_pijuice(self):
         if not self.config.get('pijuice', {}).get('enabled', False):
@@ -146,13 +170,20 @@ class EInkFrameClient:
             return None, None
 
     def _blink_led(self) -> None:
-        pin = self.config["led_pin"]
-        for _ in range(2):
-            GPIO.output(pin, GPIO.HIGH)
-            time.sleep(LED_BLINK_DURATION)
-            GPIO.output(pin, GPIO.LOW)
-            time.sleep(LED_BLINK_DURATION)
-        logger.info("LED blinked")
+        if self.config.get("mock_epd", False):
+            logger.info("Mock mode: LED blink simulated")
+            return
+            
+        try:
+            pin = self.config["led_pin"]
+            for _ in range(2):
+                GPIO.output(pin, GPIO.HIGH)
+                time.sleep(LED_BLINK_DURATION)
+                GPIO.output(pin, GPIO.LOW)
+                time.sleep(LED_BLINK_DURATION)
+            logger.info("LED blinked")
+        except Exception as e:
+            logger.warning(f"Failed to blink LED: {e}")
 
     def _get_ip(self) -> str:
         with socket.socket(socket.AF_INET, socket.SOCK_DGRAM) as s:
@@ -178,7 +209,7 @@ class EInkFrameClient:
     def _on_connect_v5(self, client: mqtt.Client, userdata: Any, flags: Dict, rc: int, properties: mqtt.Properties) -> None:
         logger.info(f"Connected with result code {rc}")
         client.subscribe(self.config["topic_image_display"])
-        props = mqtt.Properties(PackageIdentifier=1)
+        props = mqtt.Properties(mqtt.PacketTypes.PUBLISH)
         client.publish(
             self.config["topic_device_status"],
             payload=self._get_status_payload('online'),
@@ -206,7 +237,7 @@ class EInkFrameClient:
 
     def _on_disconnect_v5(self, client: mqtt.Client, userdata: Any, rc: int, properties: mqtt.Properties) -> None:
         logger.info(f"Disconnected with result code {rc}")
-        props = mqtt.Properties(PackageIdentifier=1)
+        props = mqtt.Properties(mqtt.PacketTypes.PUBLISH)
         client.publish(
             self.config["topic_device_status"],
             payload=self._get_status_payload('offline'),
@@ -231,7 +262,7 @@ class EInkFrameClient:
         except KeyboardInterrupt:
             logger.info("Shutting down...")
         finally:
-            self._on_disconnect(self.client, None, 0)
+            self._on_disconnect_v5(self.client, None, 0, None)
             GPIO.cleanup()
 
 def main():

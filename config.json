@@ -1,4 +1,5 @@
 {
+  "mock_epd": true,
   "broker_address": "broker",
   "broker_port": 8883,
   "username": "einkframe",

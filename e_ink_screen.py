@@ -16,16 +16,26 @@ logger = logging.getLogger(__name__)
 class EInkScreen:
     """Manages the E-Ink display operations."""
     
-    def __init__(self, screen_width: int = DEFAULT_WIDTH, screen_height: int = DEFAULT_HEIGHT) -> None:
+    def __init__(self, width: int, height: int, mock_epd: bool = False):
         """
         Initialize the E-Ink screen with specified dimensions.
         
         Args:
-            screen_width (int): Width of the screen in pixels
-            screen_height (int): Height of the screen in pixels
+            width (int): Width of the screen in pixels
+            height (int): Height of the screen in pixels
+            mock_epd (bool): Flag to use mock EPD for testing
         """
-        self.width = screen_width
-        self.height = screen_height
+        self.width = width
+        self.height = height
+        self.mock_epd = mock_epd
+        
+        if mock_epd:
+            from mocked_epd import EPD
+        else:
+            from waveshare_epd import EPD
+            
+        self.epd = EPD()
+        logger.info(f"Initialized E-Ink screen with mock_epd={mock_epd}")
         # Update configuration dictionary structure
         self.config_dict = {
             'EPD': {
@@ -46,7 +56,6 @@ class EInkScreen:
                 'contrast': 1
             }
         }
-        self.epd = None
         self.image_display = None
 
     def run(self) -> None:
