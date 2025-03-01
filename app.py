@@ -38,6 +38,8 @@ class EInkFrameClient:
         self.processed_message_tracker = ProcessedMessageTracker()
         self.e_ink_screen = None
         self.client = None
+        self.pijuice = None
+        self._setup_pijuice()
         self._setup_mqtt_client()
         self._setup_hardware()
 
@@ -72,34 +74,65 @@ class EInkFrameClient:
             raise
 
     def _setup_mqtt_client(self) -> None:
-        # Use MQTT5 protocol version
-        self.client = mqtt.Client(
-            client_id=str(uuid.uuid4()),
-            protocol=mqtt.MQTTv5
-        )
+        # Update to use MQTT protocol version 5
+        self.client = mqtt.Client(protocol=mqtt.MQTTv5)
         
-        # Set protocol version specific callbacks
+        # Fix the Properties initialization
+        props = mqtt.Properties()
+        props.PacketIdentifier = 1  # Note: PacketIdentifier instead of PackageIdentifier
+        
+        self.client.username_pw_set(username=self.config["username"], password=self.config["password"])
         self.client.on_connect = self._on_connect_v5
         self.client.on_message = self._on_message
-        self.client.on_disconnect = self._on_disconnect_v5
+        
+        try:
+            self.client.connect(self.config["broker_address"], self.config["broker_port"])
+        except Exception as e:
+            logging.error(f"Failed to connect to MQTT broker: {e}")
+            raise
 
-        if self.config.get("password"):
-            self.client.username_pw_set(
-                self.config["username"],
-                self.config["password"]
-            )
-            self.client.tls_set()
+    def _setup_pijuice(self):
+        if not self.config.get('pijuice', {}).get('enabled', False):
+            logging.info("PiJuice is disabled in config")
+            return
+            
+        try:
+            from pijuice import PiJuice
+            self.pijuice = PiJuice(1, 0x14)
+            logging.info("PiJuice HAT initialized successfully")
+        except Exception as e:
+            logging.warning(f"Failed to initialize PiJuice HAT: {e}")
+            self.pijuice = None
 
-        # Configure Last Will and Testament with MQTT v5 properties
-        lw_status = self._get_status_payload('offline')
-        props = mqtt.Properties(PackageIdentifier=1)
-        self.client.will_set(
-            self.config["topic_device_status"],
-            payload=lw_status,
-            qos=1,
-            retain=True,
-            properties=props
-        )
+    def get_battery_status(self):
+        if not self.pijuice:
+            return {
+                'charge': -1,
+                'voltage': -1,
+                'temperature': -1,
+                'status': 'UNKNOWN'
+            }
+            
+        try:
+            status = self.pijuice.status.GetStatus()
+            charge = self.pijuice.status.GetChargeLevel()
+            battery = self.pijuice.status.GetBatteryVoltage()
+            temp = self.pijuice.status.GetBatteryTemperature()
+            
+            return {
+                'charge': charge.get('data', -1),
+                'voltage': battery.get('data', -1),
+                'temperature': temp.get('data', -1),
+                'status': status.get('data', {}).get('battery', 'UNKNOWN')
+            }
+        except Exception as e:
+            logging.error(f"Error reading PiJuice status: {e}")
+            return {
+                'charge': -1,
+                'voltage': -1,
+                'temperature': -1,
+                'status': 'ERROR'
+            }
 
     def _get_charge_status(self) -> Tuple[Optional[str], Optional[int]]:
         try:

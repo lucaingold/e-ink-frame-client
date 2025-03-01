@@ -9,5 +9,8 @@
   "topic_device_status": "device/{device_id}/status/online",
   "screen_height": 1200,
   "screen_width": 1600,
-  "led_pin": 16
+  "led_pin": 16,
+  "pijuice": {
+    "enabled": false
+  }
 }
