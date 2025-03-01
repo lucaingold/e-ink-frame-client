@@ -43,8 +43,8 @@ class EInkScreen:
                 'spi_hz': 2000000,
                 'reset_pin': 17,
                 'busy_pin': 24,
-                'vcom': -2.06
-            },
+                'vcom': -2.27
+},
             'Image Enhancements': {
                 'color': 1,
                 'contrast': 1
@@ -52,17 +52,38 @@ class EInkScreen:
         }
         
         if mock_epd:
-            from mocked_epd import EPD
-            self.epd = EPD()
+            try:
+                from mocked_epd import EPD
+                self.epd = EPD()
+                logger.info("Using mock EPD")
+            except ImportError:
+                logger.error("Mock EPD requested but mocked_epd.py not found")
+                raise
         else:
             try:
-                self.epd = displayfactory.load_display_driver(DISPLAY_TYPE, self.config_dict)
-                self.epd.width = self.width
-                self.epd.height = self.height
+                # Try to initialize the display with retries
+                for attempt in range(MAX_RETRIES):
+                    try:
+                        logger.debug(f"Attempting to initialize display (attempt {attempt + 1}/{MAX_RETRIES})")
+                        self.epd = displayfactory.load_display_driver(DISPLAY_TYPE, self.config_dict)
+                        self.epd.width = self.width
+                        self.epd.height = self.height
+                        logger.info("Display initialized successfully")
+                        break
+                    except RuntimeError as e:
+                        if "communication with device failed" in str(e):
+                            if attempt < MAX_RETRIES - 1:
+                                logger.warning(f"Communication failed, retrying in {RETRY_DELAY} seconds...")
+                                time.sleep(RETRY_DELAY)
+                            else:
+                                logger.error("Failed to communicate with display after all retries")
+                                raise RuntimeError("Could not establish communication with display")
+                        else:
+                            raise
             except Exception as e:
                 logger.error(f"Failed to initialize display driver: {e}")
                 raise
-                
+
         logger.info(f"Initialized E-Ink screen with mock_epd={mock_epd}")
         self.image_display = None
 
